@@ -1,0 +1,73 @@
+---
+description: TypeScript enforcement — strict mode, no any, no unsafe casting, Zod validation.
+globs: ["src/**/*.ts", "src/**/*.tsx"]
+alwaysApply: true
+---
+
+# 🔧 TypeScript Enforcement
+
+## Type Safety Rules
+
+- MUST enable and maintain strict TypeScript mode (`strict: true` in `tsconfig.json`)
+- **FORBIDDEN**: `any` types — use proper generic types, `unknown`, or discriminated unions
+- **FORBIDDEN**: Unsafe casting patterns (`as unknown as T`, `as any`)
+- REQUIRED: Interface for all component props — no implicit `{}` or catch-all props
+- MUST type all function parameters and return types explicitly
+- REQUIRED: Use `interface` for object shapes, `type` for unions and aliases
+- FORBIDDEN: Loosely typed event handler parameters
+
+## Correct Typing Patterns
+
+```typescript
+// ✅ CORRECT: Explicit prop interface
+export interface UserCardProps {
+  userId: string;
+  onPress: (id: string) => void;
+  isLoading?: boolean;
+}
+
+// ✅ CORRECT: Typed API response
+interface AppointmentResponse {
+  data: Appointment[];
+  total: number;
+  page: number;
+}
+
+// ✅ CORRECT: Discriminated union for state
+type AsyncState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: string };
+
+// ❌ FORBIDDEN
+const handler = (event: any) => { ... };
+const data = response as unknown as AppointmentResponse;
+```
+
+## Validation with Zod
+
+- MUST use Zod for all form validation
+- REQUIRED: Separate validation files in `validation/` directory per feature
+  - `rules.ts` — reusable field-level rules
+  - `schemas.ts` — complete form schemas composed from rules
+- MUST provide meaningful, user-friendly error messages in schemas
+- REQUIRED: Infer TypeScript types from Zod schemas (`z.infer<typeof schema>`)
+
+```typescript
+// ✅ CORRECT: Zod schema with inferred type
+const loginSchema = z.object({
+  email: emailRule,
+  password: passwordRule,
+});
+
+export type LoginFormData = z.infer<typeof loginSchema>;
+```
+
+## TypeScript & Architecture Prohibitions
+
+- **NO** `any` types in TypeScript
+- **NO** unsafe casting (`as unknown as T`)
+- **NO** untyped navigation parameters
+- **NO** form submissions without Zod validation schema
+- **NO** loosely typed Redux state (`RootState` must be fully typed)

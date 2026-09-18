@@ -1,0 +1,79 @@
+---
+description: Styling enforcement — design tokens only, no hardcoded values, all styles in separate .styles.ts files.
+globs: ["src/**/*.ts", "src/**/*.tsx", "src/**/*.styles.ts"]
+alwaysApply: true
+---
+
+# 🎨 Styling Rules — Single Source of Truth
+
+## Core Mandate
+
+**ENFORCEMENT**: Zero tolerance for magic numbers, hardcoded values, or inline styles.
+All styling derives exclusively from design tokens.
+
+## Required Pattern
+
+```typescript
+// ✅ CORRECT: Styles in a separate .styles.ts file
+const createComponentStyles = (theme: Theme) => StyleSheet.create({
+  container: {
+    backgroundColor: theme.colors.background.primary,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+  },
+  title: {
+    fontSize: theme.typography.fontSizes['2xl+'],
+    fontWeight: theme.typography.fontWeights.bold,
+    color: theme.colors.text.primary,
+    letterSpacing: theme.typography.letterSpacingTight,
+  },
+});
+```
+
+## Correct vs Forbidden Patterns
+
+```typescript
+// ✅ CORRECT: Using design tokens
+fontSize: theme.typography.fontSizes['2xl+'],
+color: theme.colors.medical.bmiNormal,
+borderRadius: theme.borderRadius.sm,
+letterSpacing: theme.typography.letterSpacingTight,
+opacity: theme.typography.opacities.high,
+fontWeight: theme.typography.fontWeights.bold,
+
+// ❌ FORBIDDEN: Hardcoded values
+fontSize: 28,
+color: '#3AC0A0',
+borderRadius: 6,
+letterSpacing: -0.5,
+opacity: 0.8,
+fontWeight: '700',
+```
+
+## Rules
+
+- **FORBIDDEN**: Any hardcoded style values whatsoever
+- **FORBIDDEN**: Inline styles in JSX — must use separate `.styles.ts` files
+- **FORBIDDEN**: `StyleSheet.create({})` inside component files — extract to `.styles.ts`
+- **FORBIDDEN**: Math operations on theme values (`fontSize + 4`) — create proper tokens instead
+- **FORBIDDEN**: Hardcoded dimensions (`width: 280`, `height: 160`)
+- **FORBIDDEN**: `const HEIGHT = 160` — no constants with hardcoded values
+- **REQUIRED**: ALL styles derive from design tokens
+- **REQUIRED**: `createComponentStyles(theme)` pattern in separate `.styles.ts` files
+- **REQUIRED**: Use `theme.colors.*`, `theme.spacing.*`, `theme.typography.*`, `theme.sizes.*`, `theme.borderRadius.*`
+- **MUST**: Create new tokens in design system if required values don't exist yet
+- **REQUIRED**: Responsive design tokens for different screen sizes
+
+## Absolute Style Prohibitions
+
+1. **NO** hardcoded colors, spacing, or sizes
+2. **NO** magic numbers (`16`, `24`, `'#FF0000'`)
+3. **NO** hardcoded dimensions (`width: 280`, `height: 160`)
+4. **NO** inline opacity (`opacity: 0.8` → `theme.typography.opacities.high`)
+5. **NO** hardcoded letter spacing (`-0.5` → `theme.typography.letterSpacingTight`)
+6. **NO** hardcoded font weights as strings (`'700'` → `theme.typography.fontWeights.bold`)
+7. **NO** mathematical operations on theme values
+8. **NO** hardcoded border radius (`6` → `theme.borderRadius.sm`)
+9. **NO** hardcoded `rgba`/hex colors (`'#4A90E2'` → `theme.colors.*`)
+10. **NO** style objects defined within component files
+11. **NO** inline styles anywhere in JSX

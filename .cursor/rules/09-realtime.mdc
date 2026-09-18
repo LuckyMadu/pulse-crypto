@@ -1,0 +1,93 @@
+---
+description: The streaming layer — conflation, backpressure, and keeping 10 Hz tick data out of Redux.
+globs: ["backend/src/**/*.ts", "mobile/src/realtime/**/*.ts", "mobile/src/realtime/**/*.tsx"]
+alwaysApply: true
+---
+
+# 📈 Real-time streaming layer
+
+This rule covers the part of PulseCrypto that the assignment is actually
+assessing. The general React Native rules still apply; these override them where
+they conflict.
+
+## The three-tier state model (mobile)
+
+State is split by **update frequency**, not by domain. Putting these in one
+place is the single most expensive mistake available in this codebase.
+
+| Tier | Example | Tool | Why |
+|---|---|---|---|
+| Server metadata | `/pairs/meta` | RTK Query | Cached, refetchable, changes rarely |
+| User state | favourites | Redux slice + MMKV | Low frequency, needs persistence |
+| **Streaming ticks** | prices, order book | **keyed external store** | 10 Hz × 5 pairs |
+
+- **FORBIDDEN: dispatching tick data to Redux.** A dispatch per tick runs every
+  reducer and wakes every `useSelector` in the tree, roughly 50 times a second.
+  This is the failure mode the architecture exists to avoid.
+- REQUIRED: tick data lives in `mobile/src/realtime/marketStore.ts` with a
+  **per-pair listener registry**, read through `useSyncExternalStore`.
+- REQUIRED: `getSnapshot` MUST return a referentially stable value. Store frozen
+  per-pair snapshot objects and swap the reference only when that pair changes.
+  Returning a fresh object each call causes an infinite render loop, and it is
+  not an obvious one to debug.
+- REQUIRED: subscribing to pair `X` MUST NOT re-render a component subscribed
+  only to pair `Y`. There is a test for this; keep it passing.
+
+## Conflation (backend)
+
+- **FORBIDDEN: queueing upstream messages.** One mutable snapshot per pair, and
+  incoming messages overwrite fields. Memory is `O(pairs)` and independent of
+  message rate. A queue reintroduces unbounded growth.
+- REQUIRED: a dirty `Set` tracks which pairs moved. The emitter sends only
+  dirty pairs, and only the fields that changed.
+- REQUIRED: clear per-field dirty flags **after** every subscription group has
+  been projected, never inside the loop — otherwise the second group gets an
+  empty payload.
+- Latest-wins is the correct semantic for market data. It is **wrong** for
+  anything requiring every event (trades, audit, sequence-gap detection). If a
+  feature needs that, it needs a different mechanism, not a modified store.
+
+## Fan-out and backpressure (backend)
+
+- **FORBIDDEN: `JSON.stringify` per client.** Serialize once per distinct
+  depth-subscription group.
+- REQUIRED: check `socket.bufferedAmount` before every send. Over budget, skip
+  the frame and count it; never queue it.
+- REQUIRED: reset a client's skip counter when it drains. "Sustained" means
+  consecutive, not cumulative.
+- REQUIRED: `terminate()` rather than `close()` for a peer that has stopped
+  reading — a closing handshake needs a response the peer will not send.
+
+## Animation
+
+- REQUIRED: price flashes and depth bars run on the **UI thread** via Reanimated
+  shared values and `useAnimatedStyle`. The point is that they stay smooth while
+  the JS thread is busy, which is exactly when it matters.
+- FORBIDDEN: driving per-tick animation through React state.
+- Animate the single property that changes. For an order book depth overlay that
+  is one `left` percentage, not a re-layout.
+
+## Numbers on screen
+
+- REQUIRED: every numeric value renders in **JetBrains Mono**. Tabular figures
+  do not reflow as digits change, so a price ticking from `64,239.50` to
+  `64,240.00` causes no layout jitter at 10 Hz. This is a functional
+  requirement, not a stylistic one.
+
+## Connection handling
+
+- REQUIRED: exponential backoff **with jitter** on reconnect, both ends.
+- REQUIRED: a stall timeout, not just a `close` handler. The failure that
+  happens in practice is a socket that stays open and stops delivering.
+- **FORBIDDEN: clearing the market store on disconnect** (R25). The app must
+  keep showing the last received data.
+- REQUIRED: distinguish "socket down" from "this pair is quiet" in the UI. They
+  are different conditions and a trader cares about the difference.
+
+## Testing this layer
+
+- Name tests with the requirement ID: `it("R6 skips the frame when ...")`.
+- Assert the **bound**, not the behaviour under a happy path: after 10k updates,
+  `store.size` is still the pair count.
+- Use a fake socket with a settable `bufferedAmount` to test the backpressure
+  policy. The logic under test is the decision, not `ws`.

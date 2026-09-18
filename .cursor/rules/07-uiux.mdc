@@ -1,0 +1,158 @@
+---
+description: UI/UX standards — accessibility, touch targets, loading/empty states, forms, visual hierarchy, responsive design.
+globs: ["src/**/*.tsx"]
+alwaysApply: true
+---
+
+# 📱 UI/UX Best Practices
+
+## Design Principles
+
+- **Consistency**: Maintain visual and interaction consistency across all screens
+- **Hierarchy**: Establish clear visual hierarchy using typography, spacing, and color
+- **Clarity**: Make UI elements and their purposes immediately clear to users
+- **Feedback**: Provide immediate feedback for all user interactions
+- **Accessibility**: Design for all users including those with disabilities
+
+## Visual Hierarchy & Typography
+
+- REQUIRED: Use typography scale from design system (`theme.typography.fontSizes`)
+- MUST establish clear information hierarchy: Primary → Secondary → Tertiary
+- REQUIRED: Maintain consistent line heights and spacing
+- FORBIDDEN: More than 3 font sizes per screen
+- MUST use appropriate font weights for emphasis
+
+## Color & Contrast Standards
+
+- REQUIRED: Meet WCAG 2.1 AA contrast requirements (4.5:1 for normal text)
+- MUST use semantic colors from theme (`theme.colors.status.success`)
+- FORBIDDEN: Using color alone to convey information — always include text/icons
+- REQUIRED: Test with colorblind accessibility in mind
+
+## Interactive Elements
+
+- MUST provide clear affordances (buttons must look clickable)
+- REQUIRED: Minimum touch target size of **44px (iOS)** / **48dp (Android)**
+- MUST show pressed/active states for all interactive elements
+- REQUIRED: Consistent interaction patterns across similar elements
+- FORBIDDEN: Interactions that don't provide immediate feedback
+
+## Loading States
+
+- MUST implement skeleton loaders for all async operations
+- REQUIRED: Use design system `<Skeleton>` components
+- FORBIDDEN: Blank screens during loading
+- REQUIRED: Progressive loading for complex interfaces
+- MUST show loading progress for operations >2 seconds
+
+## Empty States
+
+- MUST provide helpful empty states for all lists and data-driven screens
+- REQUIRED: Use `<EmptyState>` component with actionable guidance
+- MUST include relevant action buttons
+- REQUIRED: Contextual illustration or icon
+- MUST explain what the empty state means and how to resolve it
+
+## Error Handling & Messaging
+
+- MUST implement consistent error handling
+- REQUIRED: Use toast notifications for user feedback
+- MUST provide recovery actions where possible
+- REQUIRED: Clear, human-readable error messages
+- FORBIDDEN: Technical error messages shown to users (no stack traces, error codes, etc.)
+- MUST validate forms in real-time with helpful guidance
+
+## Form Design Standards
+
+- REQUIRED: Clear field labels above or inside inputs
+- MUST provide helper text for complex fields
+- REQUIRED: Real-time validation with constructive error messages
+- MUST group related fields logically
+- REQUIRED: Clear primary vs secondary actions
+- FORBIDDEN: More than 7 fields visible at once without grouping
+
+## Form Component Priority
+
+### Priority 1: FormField Component (MANDATORY for new forms)
+
+```typescript
+// ✅ REQUIRED PATTERN for all new forms
+<FormField
+  label="Email"
+  value={value}
+  onChangeText={onChange}
+  error={error?.message}
+  helperText="Optional guidance"
+/>
+```
+
+### Priority 2: Shared Form Utilities (for existing/legacy forms)
+
+```typescript
+import {
+  createSharedFormStyles,
+  getInputStyle,
+  getInputVariant,
+} from "@design-system/utils";
+
+const sharedStyles = createSharedFormStyles(theme);
+
+<Input
+  variant={getInputVariant(error, success)}
+  style={getInputStyle(sharedStyles, error, success)}
+/>;
+```
+
+### Legacy Pattern (Being Phased Out)
+
+- **DEPRECATED**: Manual `input` + `inputError` styles in component files
+- **MIGRATION REQUIRED**: Move to `FormField` or shared utilities
+- **FORBIDDEN**: New forms with duplicated style definitions
+
+## Navigation & Information Architecture
+
+- MUST maintain consistent navigation patterns
+- REQUIRED: Clear page/screen titles and context
+- MUST provide back navigation for all deep flows
+- REQUIRED: Bottom navigation for primary app sections
+- FORBIDDEN: More than 5 primary navigation items
+
+## Responsive & Adaptive Design
+
+- REQUIRED: Design works on all device sizes (phone, tablet)
+- MUST use flexible layouts with proper constraints
+- REQUIRED: Appropriate spacing for different screen densities
+- MUST consider landscape orientation where applicable
+- REQUIRED: Safe area handling for all devices with notches
+
+## Animation & Micro-interactions
+
+- MUST use subtle animations to guide attention
+- REQUIRED: Loading animations for state changes
+- FORBIDDEN: Feedback animations longer than 300ms
+- MUST provide reduced motion alternatives
+- REQUIRED: Consistent easing and timing across animations
+
+## Accessibility (a11y) Standards
+
+- REQUIRED: Screen reader compatibility with proper `accessibilityLabel` on all interactive elements
+- MUST provide `accessibilityLabel` / `alt` for all images and icons
+- REQUIRED: Keyboard navigation support where applicable
+- MUST maintain focus indicators for navigation
+- REQUIRED: Sufficient color contrast ratios (WCAG 2.1 AA)
+- FORBIDDEN: Auto-playing media without user control
+
+## UI/UX Prohibitions
+
+- **NO** touch targets smaller than 44px (iOS) / 48dp (Android)
+- **NO** color-only information — always pair with text or icon
+- **NO** auto-playing media without user control
+- **NO** feedback animations longer than 300ms
+- **NO** technical error messages shown to users
+- **NO** forms with more than 7 fields without proper grouping
+- **NO** color contrast below WCAG 2.1 AA standards
+- **NO** missing focus indicators for keyboard navigation
+- **NO** inconsistent interaction patterns within the same feature
+- **NO** missing `accessibilityLabel` for images and icons
+- **NO** new forms using manual `Controller + Input` patterns (use `FormField`)
+- **NO** duplicating form styles across components

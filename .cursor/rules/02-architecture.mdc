@@ -1,0 +1,188 @@
+---
+description: Architecture enforcement — feature-based structure, design system usage, imports, exports, and naming conventions.
+globs: ["src/**/*.ts", "src/**/*.tsx"]
+alwaysApply: true
+---
+
+# 🏗️ Architecture Enforcement
+
+## Feature-Based Structure
+
+- NEVER place components outside the feature they belong to
+- ALWAYS use the feature directory structure: `src/features/[name]/components/`, `types/`, `validation/`
+- MUST include `index.ts` barrel exports only for directories with multiple exports
+- FORBIDDEN: `index.ts` files for single-component directories
+- Screen components MUST end with `Screen` suffix
+
+## Design System First
+
+- FORBIDDEN: Direct React Native component usage in features (`View`, `Text`, `TouchableOpacity`, etc.)
+- REQUIRED: Import all UI components from `@design-system/ui`
+- REQUIRED: Use theme-based styling with `createStyles(theme)` pattern
+- MUST use design tokens: `theme.spacing.md`, `theme.colors.text.primary`
+
+## Absolute Imports Only
+
+- REQUIRED: Use TypeScript path aliases (`@design-system`, `@features`, etc.)
+- FORBIDDEN: Relative imports across feature boundaries
+- MUST follow import order: React → Third-party → Internal (`@paths`) → Relative
+
+## File Organization & Export Strategy
+
+```
+✅ CORRECT Structure:
+src/features/[feature]/
+├── components/
+│   ├── ComponentA/
+│   │   ├── ComponentA.tsx
+│   │   └── ComponentA.styles.ts
+│   ├── ComponentB/
+│   │   ├── ComponentB.tsx
+│   │   └── ComponentB.styles.ts
+│   └── index.ts             # ✅ Barrel export for multiple components
+├── [Feature]Screen.tsx
+├── types/
+│   ├── User.ts
+│   ├── API.ts
+│   └── index.ts             # ✅ Barrel export for multiple types
+├── validation/
+│   ├── rules.ts
+│   ├── schemas.ts
+│   └── index.ts             # ✅ Barrel export for multiple files
+└── index.ts                 # ✅ Main feature export
+
+✅ DESIGN SYSTEM - Grouped Components:
+src/design-system/ui/
+├── Input/
+│   ├── Input/
+│   │   ├── Input.tsx        # NO index.ts (single component)
+│   │   └── Input.styles.ts
+│   ├── FormField/
+│   │   ├── FormField.tsx    # NO index.ts (single component)
+│   │   └── FormField.styles.ts
+│   └── index.ts             # ✅ Main group export
+├── Button/
+│   ├── Button.tsx
+│   ├── BackButton.tsx
+│   ├── Button.styles.ts
+│   └── index.ts             # ✅ Exports multiple button components
+
+❌ FORBIDDEN:
+- Components scattered across random directories
+- index.ts files for single-component directories
+- Mixing feature logic in shared directories
+```
+
+## Export Rules
+
+- **NO** `index.ts` for single-component directories
+- **YES** `index.ts` for directories with multiple exports
+- **Import directly**: `from './ComponentName/ComponentName'`
+- **Use barrel exports**: for directories with multiple related files
+
+## Naming Conventions
+
+- Screen components: `[Feature]Screen.tsx`
+- Component props: `[Component]Props`
+- Style functions: `create[Component]Styles`
+- Constants: `SCREAMING_SNAKE_CASE`
+- Files: `PascalCase.tsx` for components, `camelCase.ts` for utilities
+
+## Import Standards
+
+```typescript
+// ✅ CORRECT order:
+import React from "react";
+import { View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Button, Text } from "@design-system/ui";
+import { useTheme } from "@design-system/hooks";
+import { Theme } from "@design-system/types"; // Regular import (preferred)
+import { createStyles } from "./Component.styles";
+
+// ❌ FORBIDDEN: Mixed import order or relative cross-feature imports
+// ❌ FORBIDDEN: import type for Theme (use regular import for consistency)
+```
+
+## Import Type Rules
+
+- **FORBIDDEN**: `import type { Theme }` — use regular `import { Theme }`
+- **REQUIRED**: Regular imports for all design system types (consistency with 119 existing files)
+- **PATTERN**: Only use `import type` for truly exceptional type-only imports if needed
+
+## Component Structure Pattern
+
+```typescript
+// REQUIRED pattern for all components
+export interface ComponentNameProps {
+  // Explicit prop types — no optional catch-alls
+}
+
+export const ComponentName = ({ prop1, prop2 }: ComponentNameProps) => {
+  const { theme } = useTheme(); // REQUIRED for styling
+  const styles = createComponentStyles(theme); // REQUIRED pattern
+
+  return (
+    // Implementation using design system components only
+  );
+};
+```
+
+## Inline Functions in Render Paths
+
+- FORBIDDEN: Anonymous inline functions in render paths (new reference every render)
+- REQUIRED: Extract callbacks to named `useCallback`-wrapped handlers inside lists
+- PREFERRED: Extract `renderItem` for `FlatList` to a named component outside the parent
+
+## Asset Organization
+
+```
+src/assets/
+├── icons/[context]/      # Icons grouped by usage context
+├── images/[context]/     # Images grouped by feature
+└── lottie/              # Animation files
+```
+
+## Component Export Pattern
+
+- **REQUIRED**: Use named exports — avoid default exports except for screen components
+- **PATTERN**: Export component and its types from the same file
+
+```typescript
+// ✅ CORRECT: Named exports
+export interface DoctorCardProps { /* ... */ }
+export const DoctorCard = ({ ... }: DoctorCardProps) => { /* ... */ };
+
+// ❌ FORBIDDEN: Default export for non-screen components
+export default DoctorCard;
+```
+
+## Constants & Configuration
+
+- REQUIRED: Define all app constants in `src/constants/index.ts`
+- MUST use `SCREAMING_SNAKE_CASE` for all constant names
+- FORBIDDEN: Magic numbers or string literals scattered across feature files
+
+```typescript
+// ✅ CORRECT: src/constants/index.ts
+export const TOAST_CONFIG = {
+  TOP_OFFSET: 60,
+};
+export const ANIMATION_DURATION_MS = 250;
+```
+
+## Logging Standards
+
+- REQUIRED: Use the structured logger utility — never use `console.log` in production code
+- MUST use appropriate log levels: `debug`, `info`, `warn`, `error`
+- FORBIDDEN: `console.log`, `console.error`, or `console.warn` in committed code
+
+```typescript
+// ✅ CORRECT
+import { logger } from '@utils';
+logger.info('User signed in', { userId: user.id });
+logger.error('API call failed', { endpoint, error });
+
+// ❌ FORBIDDEN
+console.log('user:', user);
+```

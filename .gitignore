@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.yarn/
+*.tgz
+
+# Build output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Environment - .env.example IS committed, real .env files are not
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/android/.cxx/
+*.keystore
+!debug.keystore
+*.jks
+
+# iOS
+mobile/ios/Pods/
+mobile/ios/build/
+mobile/ios/*.xcworkspace/xcuserdata/
+mobile/ios/*.xcodeproj/xcuserdata/
+mobile/ios/.xcode.env.local
+
+# React Native / Metro
+.metro-health-check*
+mobile/.expo/
+.haste_map.json
+
+# The assignment brief itself. It is the employer's document and the input to
+# docs/SPEC.md, not an artifact of this repository.
+EP-Practical Assignment*.pdf
+
+# Editors and OS
+.DS_Store
+.idea/
+*.swp
+*.iml
+
+# NOT ignored, deliberately:
+#   design/     - the Figma renders the design system was derived from. They
+#                 are the reference a reviewer needs to judge fidelity, and
+#                 they are four PNGs.
+#   docs/       - SPEC, ADRs and AI_USAGE are graded deliverables.

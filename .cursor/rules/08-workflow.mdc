@@ -1,0 +1,208 @@
+---
+description: Development workflow — mandatory yarn verify, pre-task checklist, refactoring guidelines, testing, quality gates, and success criteria.
+alwaysApply: true
+---
+
+# 🚀 Development Workflow
+
+## 🚨🚨🚨 MANDATORY: Run `yarn verify` Before Completing ANY Task
+
+**After making ALL changes, you MUST run `yarn verify` and ensure it passes with ZERO errors and ZERO warnings before responding to the user.**
+
+```bash
+yarn verify
+```
+
+This runs `eslint . --max-warnings 0 && tsc --noEmit`. Both MUST pass with zero errors AND zero warnings. Fix every issue and re-run until clean. **NEVER skip this step.**
+
+---
+
+## 📋 Pre-Task Checklist
+
+Before starting any task, verify you understand:
+
+1. ✅ Feature-based architecture patterns
+2. ✅ Design system usage requirements
+3. ✅ TypeScript strict typing standards
+4. ✅ Component and styling conventions
+5. ✅ State management patterns
+6. ✅ Navigation type safety
+7. ✅ Validation schema patterns
+8. ✅ Import/export conventions
+
+---
+
+## Before Making Changes
+
+1. 📄 Understand the feature structure and existing patterns
+2. 🎨 Identify which design system components to use
+3. 🔧 Plan TypeScript interfaces and validation schemas
+4. 📱 Consider loading states, empty states, and error handling
+5. 🎯 **CRITICAL**: Review design tokens — never hardcode style values
+6. 🎯 **UI/UX REVIEW**: Check visual hierarchy, accessibility, touch targets, animations
+7. 🏗️ **ARCHITECTURE REVIEW**: Consider tradeoffs; suggest better alternatives when appropriate
+
+---
+
+## During Development
+
+- ✅ Follow the exact patterns shown in existing code
+- ✅ Use the same naming conventions
+- ✅ Implement proper error handling
+- ✅ Add loading and empty states
+- ✅ Write type-safe code
+- ✅ Provide production-ready implementations, not demo-style code
+- ✅ Separate business logic from UI components at all times
+- ✅ Handle platform-specific behavior cleanly (iOS/Android differences)
+
+---
+
+## 🔄 Refactoring Guidelines
+
+When refactoring existing code:
+
+- **Reduce complexity** — simplify logic, shorten functions, remove nested conditionals
+- **Remove duplication** — extract shared logic into hooks, utilities, or shared components
+- **Improve naming clarity** — rename to reveal intent, not implementation detail
+- **Preserve existing behavior** — refactors must not change observable behavior
+- **Improve scalability** — prefer patterns that scale with team size and feature growth
+- MUST run `yarn verify` after every refactor to confirm zero regressions
+
+---
+
+## 🧪 Testing
+
+- REQUIRED: Tests co-located with components when possible
+- MUST use `.test.tsx` extension
+- REQUIRED: Descriptive test names that explain behavior, not implementation
+- MUST test error states and edge cases
+- MUST test loading and empty states where applicable
+
+---
+
+## ✅ Pre-Submit Checklist
+
+- [ ] **`yarn verify` passes with zero errors and zero warnings (MANDATORY)**
+- [ ] All TypeScript errors resolved
+- [ ] ESLint warnings addressed
+- [ ] Design system patterns followed
+- [ ] **ZERO hardcoded style values**
+- [ ] **NO inline styles** (all styles in separate `.styles.ts` files)
+- [ ] All styles use design tokens exclusively
+- [ ] No magic numbers or literal style values
+- [ ] Proper error handling implemented
+- [ ] Loading states added
+- [ ] Empty states provided
+- [ ] Validation schemas created
+- [ ] Tests written (if applicable)
+- [ ] Business logic is not co-located with UI rendering code
+- [ ] No unnecessary re-renders introduced
+- [ ] No anonymous inline functions in list render paths
+- [ ] Platform-specific behavior handled cleanly (iOS/Android)
+- [ ] **Form Styling**:
+  - [ ] New forms use `FormField` component
+  - [ ] Legacy forms use shared utilities (no duplication)
+  - [ ] Error states display correctly across all inputs
+- [ ] **UI/UX Compliance**:
+  - [ ] Visual hierarchy is clear and follows design system
+  - [ ] All interactive elements have proper feedback states
+  - [ ] Touch targets meet minimum size requirements (44px / 48dp)
+  - [ ] Color contrast passes WCAG AA standards
+  - [ ] Error messages are user-friendly and actionable
+  - [ ] Loading states use skeleton components
+  - [ ] Empty states provide clear guidance
+  - [ ] Responsive design works on different screen sizes
+
+---
+
+## 🔀 Git & Development Conventions
+
+### Branch Naming
+
+- **PATTERN**: `feature/[description]`, `fix/[description]`, `refactor/[description]`
+- **EXAMPLES**: `feature/doctor-search`, `fix/booking-validation`, `refactor/auth-forms`
+- **FORBIDDEN**: Generic names like `fix-bug`, `update`, `wip`
+
+### Commit Message Format
+
+Use **Conventional Commits** format: `type(scope): description`
+
+- `feat(auth): add sign-in validation`
+- `fix(booking): resolve date picker timezone issue`
+- `refactor(design-system): migrate Button to design tokens`
+- `chore(deps): update RTK Query to v2`
+
+Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`
+
+### Code Review Standards
+
+All code changes require review. Reviewers must verify:
+
+- [ ] Follows TypeScript strict mode (no `any`, no unsafe casting)
+- [ ] Uses design system components (no direct RN components in features)
+- [ ] No inline styles — all styles in separate `.styles.ts` files
+- [ ] No hardcoded style values — all tokens from design system
+- [ ] Proper error handling with user-friendly messages
+- [ ] Loading and empty states implemented
+- [ ] Follows naming conventions
+- [ ] `yarn verify` passes with zero errors/warnings
+
+---
+
+## 🔍 Quality Gates
+
+Before considering any task complete:
+
+1. **🚨 `yarn verify` passes** — `eslint . --max-warnings 0 && tsc --noEmit`
+2. **MANDATORY**: Zero hardcoded style values
+4. All styling derives exclusively from design tokens
+5. No TypeScript errors or ESLint warnings
+6. Design system usage is consistent
+7. Error handling is implemented
+8. Performance best practices applied:
+   - No unnecessary re-renders
+   - Lists are virtualized and optimized
+   - Animations are performant
+   - Business logic is separated from UI
+9. **Form Styling Consistency Verified**:
+   - New forms use `FormField`
+   - Legacy forms use shared utilities (no duplication)
+   - Error states work consistently across all forms
+10. **UI/UX Standards Verified**:
+    - Visual hierarchy clear and intentional
+    - Color contrast meets WCAG AA
+    - Touch targets correctly sized
+    - Loading and empty states implemented
+    - Error messages are user-friendly
+    - Animation timing is appropriate
+    - Responsive design works on all devices
+11. **Architecture Standards Verified**:
+    - Business logic not co-located with UI
+    - State is normalized and non-duplicated
+    - RTK Query used for all server data
+    - Navigation is type-safe
+    - Platform-specific differences handled cleanly
+
+---
+
+## 🎯 Success Criteria
+
+Every change must:
+
+- ✅ Follow established architectural patterns
+- ✅ Use design system components exclusively
+- ✅ **ALL styles derive from design tokens (zero hardcoded values)**
+- ✅ Implement proper TypeScript typing (strict, no `any`)
+- ✅ Include loading and empty states
+- ✅ Handle errors gracefully with user-friendly messaging
+- ✅ Follow naming conventions
+- ✅ Maintain code organization standards
+- ✅ Keep business logic separated from UI rendering
+- ✅ Be production-ready (not demo-quality)
+- ✅ Be easy to refactor and extend
+- ✅ Meet UI/UX industry standards (WCAG 2.1 AA, touch targets, interaction feedback)
+- ✅ Meet React Native performance standards (no unnecessary re-renders, optimized lists, performant animations)
+
+---
+
+**Remember**: The goal is consistency, maintainability, excellent user experience, and production-grade quality. When in doubt, reference existing patterns in the codebase. Always think and respond as a senior reviewer who cares deeply about long-term scalability.

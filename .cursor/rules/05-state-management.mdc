@@ -1,0 +1,78 @@
+---
+description: State management — Redux Toolkit, RTK Query, normalized state, navigation type safety, API integration.
+globs: ["src/**/*.ts", "src/**/*.tsx"]
+alwaysApply: true
+---
+
+# 🗂️ State Management
+
+## Redux Toolkit Rules
+
+- MUST use Redux Toolkit (RTK) for all global state
+- REQUIRED: Type `RootState` and `AppDispatch` — no untyped dispatch or state selectors
+- MUST organize slices by domain/feature (not by type)
+- FORBIDDEN: Direct state mutations outside of `createSlice` reducers
+- REQUIRED: Normalized state shape for relational data (use `createEntityAdapter`)
+- MUST prefer **selectors** and **derived state** over duplicated/redundant state
+- Ensure **unidirectional data flow** is always maintained
+- FORBIDDEN: Global state for local UI-only concerns (use `useState` instead)
+
+## RTK Query — API Integration
+
+- MUST use RTK Query for all API calls — no raw `fetch` or `axios` outside RTK Query
+- PREFER RTK Query caching over duplicating server state in Redux slices
+- REQUIRED: Proper error handling with user-facing feedback for every endpoint
+- MUST implement loading states (skeleton components) for all async operations
+- MUST handle all edge cases: empty responses, network errors, partial failures
+- FORBIDDEN: Duplicating server state in a Redux slice when RTK Query already caches it
+
+## RTK Query Pattern
+
+```typescript
+// ✅ CORRECT: RTK Query endpoint
+export const appointmentsApi = createApi({
+  reducerPath: 'appointmentsApi',
+  baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
+  endpoints: (builder) => ({
+    getAppointments: builder.query<AppointmentResponse, GetAppointmentsParams>({
+      query: (params) => ({ url: '/appointments', params }),
+      providesTags: ['Appointment'],
+    }),
+  }),
+});
+
+// ✅ CORRECT: Usage in component
+const { data, isLoading, isError, error } = useGetAppointmentsQuery(params);
+// Handle all three states: loading, error, success
+```
+
+## Navigation — Type Safety
+
+- MUST define all route parameters in centralized navigation types
+- REQUIRED: Type-safe navigation hooks (`useNavigation<ScreenNavigationProp>()`)
+- FORBIDDEN: Untyped navigation parameters or `any` in navigation types
+- MUST prevent unnecessary navigation re-renders by avoiding inline param objects
+- PREFER lazy-loaded screens for deep navigation stacks
+
+```typescript
+// ✅ CORRECT: Typed navigation
+type RootStackParamList = {
+  Home: undefined;
+  AppointmentDetail: { appointmentId: string };
+};
+
+const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+navigation.navigate('AppointmentDetail', { appointmentId: id });
+
+// ❌ FORBIDDEN: Untyped navigation
+navigation.navigate('AppointmentDetail', { id } as any);
+```
+
+## Prohibitions
+
+- **NO** direct state mutations outside reducers
+- **NO** global state for local UI-only state (modals, toggles, form focus)
+- **NO** duplicating server state in Redux when RTK Query caches it
+- **NO** untyped navigation parameters
+- **NO** raw `fetch`/`axios` calls outside RTK Query
+- **NO** API calls without error handling and loading states

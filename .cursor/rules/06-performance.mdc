@@ -1,0 +1,81 @@
+---
+description: React Native performance — re-renders, FlatList/SectionList optimization, animations, navigation, bundle size.
+globs: ["src/**/*.tsx", "src/**/*.ts"]
+alwaysApply: true
+---
+
+# ⚡ Performance
+
+## Re-render Minimization
+
+- **Minimize unnecessary re-renders**: use `React.memo`, `useCallback`, and `useMemo` only when **justified by profiling or a clear, measurable need**
+- FORBIDDEN: Over-memoizing trivial computations — this introduces complexity without gain
+- FORBIDDEN: Creating new object/array references in render (causes child re-renders)
+- **Avoid expensive bridge operations**: prefer native modules and batch updates
+
+## List Performance (FlatList / SectionList)
+
+MUST optimize all virtualized list usage:
+
+```typescript
+// ✅ CORRECT: Optimized FlatList
+const renderItem = useCallback(
+  ({ item }: { item: Appointment }) => <AppointmentCard appointment={item} />,
+  [],
+);
+
+const keyExtractor = useCallback((item: Appointment) => item.id, []);
+
+<FlatList
+  data={appointments}
+  renderItem={renderItem}           // ✅ Stable reference
+  keyExtractor={keyExtractor}       // ✅ Stable, unique key
+  getItemLayout={getItemLayout}     // ✅ When item height is fixed
+  windowSize={5}
+  maxToRenderPerBatch={10}
+  initialNumToRender={8}
+  removeClippedSubviews={true}
+/>
+
+// ❌ FORBIDDEN: Inline renderItem (new reference every render)
+<FlatList renderItem={({ item }) => <AppointmentCard item={item} />} />
+```
+
+Rules:
+- `keyExtractor` must return a **stable, unique** key — never use array index
+- Use `getItemLayout` when item heights are fixed (eliminates layout measurement)
+- Tune `windowSize`, `maxToRenderPerBatch`, `initialNumToRender` for the list size
+- Extract `renderItem` to a `useCallback`-wrapped function or a separate named component
+- FORBIDDEN: Rendering large datasets without virtualization (`ScrollView` + `map`)
+
+## Navigation Performance
+
+- MUST prevent unnecessary navigation stack re-renders
+- FORBIDDEN: Passing inline objects/arrays as navigation params (breaks referential equality)
+- PREFER lazy-loaded screens for deep or infrequently accessed navigation stacks
+- REQUIRED: `React.memo` or `useFocusEffect` where appropriate to prevent off-screen re-renders
+
+## Animation Performance
+
+- REQUIRED: Use `Animated` API or `react-native-reanimated` for all animations
+- MUST keep animations on the UI thread where possible (use Reanimated worklets)
+- FORBIDDEN: Animations that drive JS-thread state updates on every frame
+- FORBIDDEN: `setInterval`-driven animations — use `Animated.loop` or Reanimated
+- REQUIRED: Animations stay within 300ms for user feedback interactions
+- MUST provide reduced motion alternatives for accessibility
+
+## Bundle & Startup
+
+- REQUIRED: Lazy loading for heavy features and non-critical screens
+- MUST optimize images and assets (correct formats, appropriate resolutions)
+- FORBIDDEN: Importing entire libraries when only specific functions are needed (use tree-shaking)
+- FORBIDDEN: Importing large third-party libraries for functionality available natively
+
+## Performance Prohibitions
+
+- **NO** anonymous inline `renderItem` in `FlatList`/`SectionList`
+- **NO** rendering large lists with `ScrollView` + `.map()` (no virtualization)
+- **NO** `setInterval`-driven animations
+- **NO** global state for local UI-only concerns
+- **NO** duplicating server state in Redux when RTK Query already caches it
+- **NO** unnecessary `useEffect` chains that trigger cascading re-renders
