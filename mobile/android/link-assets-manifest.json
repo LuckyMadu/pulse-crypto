@@ -1,0 +1,41 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/HankenGrotesk-Bold.ttf",
+      "sha1": "b8afdae7093b3f601e14753eeea7e025d94ae2e1"
+    },
+    {
+      "path": "assets/fonts/Inter-Bold.ttf",
+      "sha1": "5a912e0600350ef7bb9c7c2e6c585815bb30ca16"
+    },
+    {
+      "path": "assets/fonts/Inter-Medium.ttf",
+      "sha1": "a961cb10310cf86b23bfbe21a637614d1046d795"
+    },
+    {
+      "path": "assets/fonts/Inter-Regular.ttf",
+      "sha1": "7a3fa76705ad586f6410a1b5b0059dd17db20c26"
+    },
+    {
+      "path": "assets/fonts/JetBrainsMono-Bold.ttf",
+      "sha1": "a2ca1bc6bb575ac125d9eaf338aa9a5af56bc377"
+    },
+    {
+      "path": "assets/fonts/JetBrainsMono-Medium.ttf",
+      "sha1": "e71dac67729fb110d7fc7e4a457ad19fcd921d2b"
+    },
+    {
+      "path": "assets/fonts/LICENSE-HankenGrotesk.txt",
+      "sha1": "877ccfc4b286ac469d32f1af4d22f3342fcf0231"
+    },
+    {
+      "path": "assets/fonts/LICENSE-Inter.txt",
+      "sha1": "cdd01b7e68db81d663f1c3820b6f7c40028900dd"
+    },
+    {
+      "path": "assets/fonts/LICENSE-JetBrainsMono.txt",
+      "sha1": "ac0b4e9eac2171ebe70fab9abbc2294e0cd46944"
+    }
+  ]
+}
