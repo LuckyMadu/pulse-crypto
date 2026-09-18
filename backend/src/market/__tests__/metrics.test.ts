@@ -2,6 +2,11 @@
  * The pure order book maths. These are cheap tests, but they cover the two
  * numbers a reviewer is most likely to eyeball against the screen and find
  * wrong: the spread and the pressure split.
+ *
+ * R34: this file imports no socket, no store and no config. That the maths can
+ * be tested in isolation is the separation of concerns, demonstrated rather
+ * than claimed - the alternative design computes these inside the ingest
+ * handler, where they are only reachable through a live connection.
  */
 
 import { computeCumulativeDepth, computePressure, computeSpread } from "../metrics";
