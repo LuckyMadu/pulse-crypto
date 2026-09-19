@@ -3,8 +3,6 @@
 A real-time cryptocurrency market data pipeline: an Express gateway that ingests Binance public
 market streams, conflates them, and fans them out over WebSocket to a bare React Native client.
 
-Built for the *Staff Engineer - Mobile Apps (Architect)* practical assignment.
-
 | | |
 |---|---|
 | **Backend** | Node 20+, Express 5, `ws`, TypeScript |
