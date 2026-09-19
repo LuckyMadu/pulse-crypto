@@ -8,11 +8,15 @@ the agent was told.
 
 A real-time cryptocurrency market data system in two parts:
 
-- `backend/` - an Express 5 + `ws` gateway that ingests Binance market streams,
+- `pulse-crypto/backend/` - an Express 5 + `ws` gateway that ingests Binance market streams,
   **conflates** them into one snapshot per pair, and fans out to mobile clients
   on a fixed interval.
-- `mobile/` - a bare React Native 0.86 app that renders a watchlist, a trading
+- `pulse-crypto/mobile/` - a bare React Native 0.86 app that renders a watchlist, a trading
   terminal and a telemetry screen.
+
+Everything outside `pulse-crypto/` is written deliverable rather than code: `docs/`
+holds the spec, the ADRs and the AI usage log, and `design/` holds the Figma
+renders the design system was derived from.
 
 `docs/SPEC.md` is the requirements document. Every requirement has an ID
 (`R1`...`R37`). **Reference those IDs in test names and commit messages.**
@@ -25,26 +29,26 @@ one, stop and raise it rather than working around it.
 1. **Never put streaming tick data in Redux.**
    Ticks arrive at 10 Hz for five pairs. A Redux dispatch per tick runs every
    reducer and wakes every `useSelector` in the tree. Tick data lives in
-   `mobile/src/realtime/marketStore.ts`, a keyed external store read through
+   `pulse-crypto/mobile/src/realtime/marketStore.ts`, a keyed external store read through
    `useSyncExternalStore`, so only the components subscribed to the pair that
    changed re-render. Redux holds metadata (RTK Query) and favourites only.
 
 2. **Never buffer upstream messages in a queue.**
-   `backend/src/market/marketStore.ts` holds exactly one mutable snapshot per
+   `pulse-crypto/backend/src/market/marketStore.ts` holds exactly one mutable snapshot per
    pair. Memory is `O(pairs)`, independent of message rate and client count.
    Adding a queue reintroduces the unbounded growth the design exists to
    prevent (R6).
 
 3. **Never call `JSON.stringify` per client in the fan-out path.**
    Serialize once per distinct depth-subscription group and reuse the string.
-   See `backend/src/market/emitter.ts`.
+   See `pulse-crypto/backend/src/market/emitter.ts`.
 
 4. **Never clear the market store on disconnect.**
    R25 requires the app keeps showing the last received data when the backend
    goes away. The store is keyed state, not a session cache.
 
 5. **`config.ts` is the only module that reads `process.env`** (backend) and
-   `mobile/src/config/index.ts` the only one that hardcodes hosts.
+   `pulse-crypto/mobile/src/config/index.ts` the only one that hardcodes hosts.
 
 6. **`logger` is the only sanctioned output sink.** `no-console` is an error
    everywhere except `utils/logger.ts`. This is enforced by ESLint.
@@ -59,24 +63,39 @@ one, stop and raise it rather than working around it.
 - **Test names start with the requirement ID** they cover:
   `it("R6 skips the frame instead of queueing it when over the send budget")`.
 - **No inline styles and no colour literals in React Native components.** Both
-  are ESLint errors. Colours come from the design system tokens; styles go in
-  a `StyleSheet.create` or a `.styles.ts` sibling.
-- **Design tokens are not negotiable ad hoc.** `mobile/src/design-system/tokens`
-  is generated from the Figma style guide. Add a semantic alias rather than a
-  new hex value.
+  are ESLint errors. Colours come from the design system tokens.
+- **Styles live in an `X.styles.ts` sibling**, never in the component file. The
+  file exports a `styles` object plus, where a style varies by prop, one
+  pre-registered entry per variant - `toneStyles`, `sideStyles`, `levelStyles`.
+- **Those style objects are static, built once at module load.** Do *not*
+  introduce the `const styles = createStyles(theme)` pattern. The app has no
+  runtime theme to parameterise on, and calling `StyleSheet.create` in a render
+  body would run it on every tick in components like `OrderBookRow` and
+  `MarketRow`. A style that varies by prop gets a registered variant; one that
+  varies by a genuinely dynamic value gets `useMemo`.
+- **Pure logic does not live in components.** Anything a component *computes*
+  rather than renders belongs in `features/<name>/domain/`, colocated with its
+  tests - the mobile counterpart to the backend's `market/metrics.ts`. The
+  order book projection and the telemetry scales are the worked examples.
+- **Design tokens are not negotiable ad hoc.**
+  `pulse-crypto/mobile/src/design-system/tokens` is generated from the Figma
+  style guide. Add a semantic alias rather than a new hex value. Geometry
+  belonging to one hand-drawn glyph is the exception and stays a local
+  constant in that component's `.styles.ts` - nothing else can reuse a
+  magnifier's lens diameter.
 
 ## Commands
 
 ```bash
 # backend
-cd backend
+cd pulse-crypto/backend
 npm run dev              # tsx watch, live reload
 npm run dev:synthetic    # SYNTHETIC_LOAD=1, ~2000 msg/s generated
 npm run verify           # lint (0 warnings) + tsc --noEmit + jest
 npm test
 
 # mobile
-cd mobile
+cd pulse-crypto/mobile
 npm start                # metro
 npm run android          # requires an emulator already running
 npm run verify
@@ -88,8 +107,8 @@ that has not passed it is not finished.
 
 ## The protocol contract
 
-`backend/src/types/protocol.ts` is the source of truth and is **copied** into
-`mobile/src/types/protocol.ts` by `npm run sync:protocol`. The copy carries a
+`pulse-crypto/backend/src/types/protocol.ts` is the source of truth and is **copied**
+into `pulse-crypto/mobile/src/types/protocol.ts` by `npm run sync:protocol`. The copy carries a
 "generated, do not edit" header.
 
 If you change the wire format: edit the backend copy, run the sync script,

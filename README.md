@@ -16,8 +16,25 @@ Built for the *Staff Engineer - Mobile Apps (Architect)* practical assignment.
 
 ---
 
+## Repository layout
+
+```
+pulse-crypto/      the system - the two packages that make up the product
+  backend/         Express 5 + ws gateway
+  mobile/          bare React Native app
+docs/              SPEC, ADRs, AI usage log - the written deliverables
+design/            the Figma renders the design system was derived from
+```
+
+The split separates the two things a reader is here for. `pulse-crypto/` is the thing that runs;
+everything beside it is prose *about* the thing that runs, and a reviewer should not have to
+descend into the source tree to find the ADRs.
+
+---
+
 ## Table of contents
 
+- [Repository layout](#repository-layout)
 - [Quick start](#quick-start)
 - [Setup instructions](#setup-instructions)
 - [Build and run](#build-and-run)
@@ -43,13 +60,13 @@ Three terminals, from the repository root:
 
 ```bash
 # 1. gateway
-cd backend && npm install && npm run dev
+cd pulse-crypto/backend && npm install && npm run dev
 
 # 2. metro
-cd mobile && npm install && npm start
+cd pulse-crypto/mobile && npm install && npm start
 
 # 3. app
-cd mobile && npm run android
+cd pulse-crypto/mobile && npm run android
 ```
 
 If Binance is unreachable from your network, swap step 1 for `npm run dev:synthetic` and everything
@@ -78,8 +95,8 @@ export PATH="$JAVA_HOME/bin:$PATH"
 ### Install
 
 ```bash
-cd backend && npm install
-cd ../mobile && npm install
+cd pulse-crypto/backend && npm install
+cd ../mobile          && npm install
 ```
 
 The mobile app bundles Inter, Hanken Grotesk and JetBrains Mono from `mobile/assets/fonts`; they are
@@ -89,7 +106,7 @@ Licences are in `mobile/assets/font-licenses/`.
 ### Configuration
 
 The gateway runs with no configuration at all. Every value in
-[`backend/.env.example`](backend/.env.example) is the default that `src/config.ts` already applies,
+[`pulse-crypto/backend/.env.example`](pulse-crypto/backend/.env.example) is the default that `src/config.ts` already applies,
 so the file is documentation rather than a required step. Copy it to `.env` only to override
 something.
 
@@ -173,7 +190,7 @@ two of the brief's explicit non-functional requirements (R28, R34), so this is t
 answered rather than decoration.
 
 ```
-backend/src/
+pulse-crypto/backend/src/
   server.ts          port, WebSocket attach, graceful shutdown
   app.ts             builds the Express app, never calls listen()
   config.ts          the only reader of process.env, validated at boot
@@ -229,7 +246,7 @@ clears it.
 Three consequences worth stating plainly, because they are the argument for the design:
 
 1. **Memory is `O(pairs)`, not `O(messages)`.** It is structurally incapable of growing with the
-   message rate. `backend/src/market/__tests__/marketStore.test.ts` asserts this across 10,000
+   message rate. `pulse-crypto/backend/src/market/__tests__/marketStore.test.ts` asserts this across 10,000
    ingested updates.
 
 2. **Dropping intermediate ticks is correct here, not a compromise.** For a price display, the
@@ -276,7 +293,7 @@ never sent a close frame, which is the normal failure mode on mobile networks.
 
 ## Payload format (R10)
 
-[`backend/src/types/protocol.ts`](backend/src/types/protocol.ts) is the executable form of this
+[`pulse-crypto/backend/src/types/protocol.ts`](pulse-crypto/backend/src/types/protocol.ts) is the executable form of this
 section, and `mobile/scripts/sync-protocol.js` copies it verbatim into the app with a
 "generated - do not edit" header. That is a deliberate three-line script rather than a shared
 workspace package: two packages do not justify monorepo tooling, and
@@ -556,7 +573,7 @@ suggestion was rejected. The short version:
 ID:
 
 ```bash
-rg -o 'R\d+' backend/src mobile/src | sort -u   # what is covered
+rg -o 'R\d+' pulse-crypto/*/src | sort -u       # what is covered
 git log --oneline --grep 'R6'                    # what touched a requirement
 ```
 
@@ -568,6 +585,15 @@ the invariants an agent must not break - "never dispatch tick data to Redux", "n
 messages", "serialize each frame once" - and `.cursor/rules/` carries nine rule files, eight adapted
 from an existing production React Native codebase plus `09-realtime.mdc` written for this streaming
 layer.
+
+**Design was extracted from Figma over MCP, including where that did not work.** The mockup was a
+Figma file, so the Figma MCP server was connected to read it directly - node structure, layout and
+exact spacing - rather than eyeballing colours off a screenshot. Two failures are recorded, because
+"we used MCP" is not information on its own: `get_variable_defs` returned nothing, the file having
+no Figma Variables and so no token system to import; and the style guide node is a flattened raster
+rather than live layers, so the four nine-step tonal ramps in `tokens/colors.ts` were pixel-sampled
+from the exported PNG with a short script. The renders are committed in [`design/`](design/) so the
+derivation is checkable against its source.
 
 **Review was mechanical.** `npm run verify` in both packages (ESLint at zero warnings, `tsc --noEmit`,
 Jest) gates every slice, and a Bugbot pass ran over the diff before the final commit. Generated code
@@ -585,8 +611,8 @@ argued.
 ## Testing
 
 ```bash
-cd backend && npm run verify
-cd mobile  && npm run verify
+cd pulse-crypto/backend && npm run verify
+cd ../mobile           && npm run verify
 ```
 
 Each `verify` runs ESLint with zero tolerance for warnings, `tsc --noEmit`, and Jest.
@@ -598,7 +624,13 @@ synthetic feed's distribution, and the REST routes via `supertest`.
 
 Mobile tests cover the favourites reducer and its MMKV round trip (including cold-start hydration
 and version mismatch), the keyed store's notification isolation and `useSyncExternalStore`
-contract, and the `/pairs/meta` normalizer.
+contract, the `/pairs/meta` normalizer, the order book accumulation and depth-chart projection in
+`features/terminal/domain/`, and the interval and FPS scales in `features/telemetry/domain/`.
+
+The two `domain/` folders are the mobile counterpart to the backend's `market/metrics.ts`: pure
+functions, no React, no sockets, tested by calling them with numbers. Anything a component computes
+rather than renders belongs there, which is what keeps `MarketDepth` down to turning geometry into
+SVG elements rather than deriving it.
 
 ---
 
@@ -610,7 +642,7 @@ Full criteria in [`docs/SPEC.md`](docs/SPEC.md). This table is the map from requ
 
 | ID | Requirement | Where |
 |----|-------------|-------|
-| R1 | Five trading pairs | `backend/src/config.ts` |
+| R1 | Five trading pairs | `config.ts` |
 | R2 | Connect to Binance WebSocket streams | `binance/upstreamClient.ts` |
 | R3 | Continuously ingest order book updates | `binance/upstreamClient.ts`, `binance/normalize.ts` |
 | R4 | Buffer / batch incoming updates | `market/marketStore.ts` |
@@ -632,11 +664,11 @@ Full criteria in [`docs/SPEC.md`](docs/SPEC.md). This table is the map from requ
 | R15 | Favourite pairs | `store/redux/slices/favouritesSlice.ts` |
 | R16 | Favourites persisted | `lib/storage/persistSlice.ts` (MMKV) |
 | R17 | Favourites restored on restart | `store/redux/index.ts` (`preloadedState`) |
-| R18 | Detail: price, pressure, spread, order book, timestamp | `features/terminal/` |
+| R18 | Detail: price, pressure, spread, order book, timestamp | `features/terminal/`, `features/terminal/domain/orderBook.ts` |
 | R19 | Continuous updates | `realtime/MarketStreamClient.ts` |
 | R20 | Smooth under sustained bursts | `realtime/marketStore.ts`, `features/telemetry/components/FpsGauge.tsx` |
 | R21 / R22 | Green / red price flash | `MarketRow.tsx`, `features/terminal/components/PriceTicker.tsx` |
-| R23 | Order book volume animates smoothly | `features/terminal/components/OrderBookRow.tsx` |
+| R23 | Order book volume animates smoothly | `features/terminal/components/OrderBookRow.tsx`, `features/terminal/domain/orderBook.ts` (chart geometry) |
 | R24 | Show connection status when backend is down | `components/ConnectionIndicator.tsx`, `components/ConnectionBanner.tsx` |
 | R25 | Keep showing last received data | `realtime/marketStore.ts` (no clear method) |
 | R26 | Auto-reconnect | `realtime/MarketStreamClient.ts` |
@@ -652,31 +684,41 @@ Full criteria in [`docs/SPEC.md`](docs/SPEC.md). This table is the map from requ
 | R31 | Efficient state management | [above](#mobile-state-architecture), [ADR-0002](docs/adr/0002-external-store-for-ticks.md) |
 | R32 | Robust connection handling | `MarketStreamClient.ts`, `ws/clientRegistry.ts` |
 | R33 | Appropriate error handling | `middleware/errorHandler.ts`, `binance/normalize.ts` |
-| R34 | Separation of concerns | `market/metrics.ts` is pure and tested without sockets |
+| R34 | Separation of concerns | `market/metrics.ts` (backend) and `features/*/domain/` (mobile) are pure and tested without sockets or React |
 | R35 | Git repo | this repository, commits in slices tagged by requirement ID |
-| R36 | Screen recording | see below |
+| R36 | Screen recording | [Screen recording](#screen-recording) - step-by-step, each step tagged with the requirements it demonstrates |
 | R37 | README | this file |
 
 ---
 
 ## Screen recording
 
-The recording follows this order, because each step demonstrates a requirement that is invisible
-if you do not point at it:
+> **Recording:** _add the file or link here before submitting._
 
-1. `npm run dev`, then `curl /pairs/meta` and `curl /health` - the REST surface.
-2. App launches on the emulator; watchlist populates; prices tick with green/red flashes and per-row
-   live dots.
-3. Search filters to `btc`; favourite two pairs; **kill and relaunch the app** - favourites restored
-   with no flash of the un-favourited state.
-4. Terminal detail: order book updating, depth bars animating, spread and pressure live,
-   last-updated timestamp advancing.
-5. Pull-to-refresh on the watchlist - metadata reloads while prices keep ticking underneath.
-6. **Kill the backend.** Status flips to reconnecting, last prices stay on screen, dots go stale.
-   Restart it; the app reconnects with no user action.
-7. Telemetry: drag Update Frequency from 100 ms to 1000 ms and back; emit rate tracks it live.
-8. Restart with `SYNTHETIC_LOAD=1`: ingestion jumps to ~2000 msg/s, **emit rate stays flat**, the FPS
-   gauge holds 60, memory stays flat. This is the entire thesis of the submission on one screen.
+What the recording shows, in order. Each step demonstrates a requirement that is invisible unless
+someone points at it, so this doubles as an acceptance walkthrough - the IDs are the same ones used
+in [`docs/SPEC.md`](docs/SPEC.md), in the test names and in the commit log, so any claim below can
+be traced to the code that implements it.
+
+| # | Time | What to watch | Requirements |
+|---|------|---------------|--------------|
+| 1 | | `npm run dev`, then `curl /pairs/meta` and `curl /health` - the REST surface, upstream connected, all five pairs. | R1, R2, R11 |
+| 2 | | App launches on the emulator; the watchlist populates; prices tick with green and red flashes and per-row live dots. | R12, R13, R19, R21, R22 |
+| 3 | | Search narrows to `btc`; two pairs favourited; **app killed and relaunched** - favourites restored with no flash of the un-favourited state. | R14, R15, R16, R17 |
+| 4 | | Terminal detail: order book updating, depth bars animating, spread and pressure live, last-updated timestamp advancing. | R18, R23 |
+| 5 | | Pull-to-refresh on the watchlist - metadata reloads while prices keep ticking underneath, because the socket is never torn down. | R27 |
+| 6 | | **Backend killed.** Status flips to reconnecting, last prices stay on screen, dots go stale. Restarted, and the app reconnects with no user action. | R24, R25, R26, R32 |
+| 7 | | Telemetry: Update Frequency dragged from 100 ms to 1000 ms and back; the emit rate tracks it live. Returned to 100 ms before the next step. | R5 |
+| 8 | | Restarted with `SYNTHETIC_LOAD=1`: ingestion jumps to ~2000 msg/s, **the emit rate stays flat at 10/s**, the conflation ratio climbs to ~200:1, buffered pairs stay at 5, memory stays flat and the FPS gauge holds 60. | R4, R6, R20, R30, R31 |
+
+Step 8 is the whole argument on one screen: the input rate changes by a factor of twenty and
+nothing downstream moves. Everything before it is setup. Step 7 returns the interval to its 100 ms
+default first, deliberately - holding 60 FPS at one emit per second would demonstrate nothing.
+
+Between them these steps cover every requirement that can be shown on screen. The remainder - R3,
+R7 to R10 and R28, R29, R33 to R37 - are wire-format, documentation or code-structure requirements,
+evidenced by the [traceability table](#requirements-traceability) and by `npm run verify` rather
+than by video.
 
 ---
 

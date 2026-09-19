@@ -13,19 +13,41 @@ All styling derives exclusively from design tokens.
 
 ## Required Pattern
 
+> **PulseCrypto deviation.** The `createComponentStyles(theme)` form below
+> assumes a runtime theme context. This app has no theme provider and no
+> light/dark switching - tokens are static module constants - and it renders
+> at 10 Hz, so calling `StyleSheet.create` in a render body would rebuild the
+> stylesheet on every tick in `OrderBookRow`, `MarketRow` and `Text`. Here the
+> `.styles.ts` file exports a **static** `styles` object built once at import,
+> plus one pre-registered entry per variant where a style depends on a prop.
+> Everything else in this file applies unchanged.
+
 ```typescript
-// ✅ CORRECT: Styles in a separate .styles.ts file
+// ✅ CORRECT here: static styles, registered once at module load
+export const toneStyles = StyleSheet.create({
+  up: { color: colors.up.text },
+  down: { color: colors.down.text },
+});
+
+export const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.bg.elevated,
+    padding: spacing.md,
+    borderRadius: radii.sm,
+  },
+});
+
+// ❌ FORBIDDEN here: rebuilds the stylesheet on every render
+const styles = createComponentStyles(useTheme().theme);
+```
+
+```typescript
+// ✅ The upstream pattern, for a codebase that does have a runtime theme
 const createComponentStyles = (theme: Theme) => StyleSheet.create({
   container: {
     backgroundColor: theme.colors.background.primary,
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.sm,
-  },
-  title: {
-    fontSize: theme.typography.fontSizes['2xl+'],
-    fontWeight: theme.typography.fontWeights.bold,
-    color: theme.colors.text.primary,
-    letterSpacing: theme.typography.letterSpacingTight,
   },
 });
 ```
@@ -57,10 +79,17 @@ fontWeight: '700',
 - **FORBIDDEN**: `StyleSheet.create({})` inside component files — extract to `.styles.ts`
 - **FORBIDDEN**: Math operations on theme values (`fontSize + 4`) — create proper tokens instead
 - **FORBIDDEN**: Hardcoded dimensions (`width: 280`, `height: 160`)
-- **FORBIDDEN**: `const HEIGHT = 160` — no constants with hardcoded values
+- **FORBIDDEN**: `const HEIGHT = 160` — no constants with hardcoded values, with
+  one exception: geometry belonging to a single hand-drawn glyph stays a local
+  `const` in that component's `.styles.ts` (see `SearchField`, `TabNavigator`).
+  A global `sizes.magnifierLensDiameter` has no second call site.
 - **REQUIRED**: ALL styles derive from design tokens
-- **REQUIRED**: `createComponentStyles(theme)` pattern in separate `.styles.ts` files
-- **REQUIRED**: Use `theme.colors.*`, `theme.spacing.*`, `theme.typography.*`, `theme.sizes.*`, `theme.borderRadius.*`
+- **REQUIRED**: A static `styles` object per `.styles.ts`, built once at module
+  load, plus one registered entry per variant where a style depends on a prop.
+  **Not** `createComponentStyles(theme)` — see the deviation note above.
+- **REQUIRED**: Use `colors.*`, `spacing.*`, `sizes.*`, `radii.*`,
+  `borderWidth.*`, `durations.*`, `opacities.*`, `textVariants.*` from
+  `@design-system`
 - **MUST**: Create new tokens in design system if required values don't exist yet
 - **REQUIRED**: Responsive design tokens for different screen sizes
 
@@ -69,11 +98,13 @@ fontWeight: '700',
 1. **NO** hardcoded colors, spacing, or sizes
 2. **NO** magic numbers (`16`, `24`, `'#FF0000'`)
 3. **NO** hardcoded dimensions (`width: 280`, `height: 160`)
-4. **NO** inline opacity (`opacity: 0.8` → `theme.typography.opacities.high`)
-5. **NO** hardcoded letter spacing (`-0.5` → `theme.typography.letterSpacingTight`)
-6. **NO** hardcoded font weights as strings (`'700'` → `theme.typography.fontWeights.bold`)
-7. **NO** mathematical operations on theme values
-8. **NO** hardcoded border radius (`6` → `theme.borderRadius.sm`)
-9. **NO** hardcoded `rgba`/hex colors (`'#4A90E2'` → `theme.colors.*`)
+4. **NO** inline opacity (`opacity: 0.8` → `opacities.pressed`)
+5. **NO** hardcoded letter spacing (`-0.5` → a `textVariants` entry)
+6. **NO** hardcoded font weights as strings (`'700'` → a `textVariants` entry)
+7. **NO** mathematical operations on theme values (`bottomNav + spacing.lg` →
+   `sizes.tabBarClearance`)
+8. **NO** hardcoded border radius (`6` → `radii.sm`)
+9. **NO** hardcoded `rgba`/hex colors (`'#4A90E2'` → `colors.*`)
 10. **NO** style objects defined within component files
 11. **NO** inline styles anywhere in JSX
+12. **NO** `StyleSheet.create` reached in a render body — it must run at import
