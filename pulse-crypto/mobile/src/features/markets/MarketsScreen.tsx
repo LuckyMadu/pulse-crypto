@@ -12,12 +12,13 @@
  * fails - a socket that is up is enough to render the screen.
  */
 
-import { useCallback, useMemo, useState } from "react";
-import { RefreshControl, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RefreshControl, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
 import { ConnectionBanner, TopAppBar } from "@components";
-import { SearchField, Text, colors, sizes, spacing } from "@design-system";
+import { SearchField, Text, colors, durations } from "@design-system";
+import { PairMeta } from "@protocol";
 import { useSortedPairs, useStreamPairs } from "@realtime";
 import {
   useAppDispatch,
@@ -26,6 +27,9 @@ import {
   toggleFavourite,
 } from "@store";
 import { MarketRow } from "./components/MarketRow";
+import { REFRESH_COLOURS, styles } from "./MarketsScreen.styles";
+
+const keyExtractor = (pair: string) => pair;
 
 export const MarketsScreen = () => {
   const navigation = useNavigation();
@@ -34,7 +38,7 @@ export const MarketsScreen = () => {
   const streamPairs = useStreamPairs();
   const [query, setQuery] = useState("");
 
-  const { data, isFetching, refetch } = useGetPairsMetaQuery();
+  const { data, refetch } = useGetPairsMetaQuery();
 
   // Prefer the REST order; fall back to whatever the socket has told us.
   const allPairs = data?.order.length ? data.order : streamPairs;
@@ -52,7 +56,7 @@ export const MarketsScreen = () => {
   }, [data?.byPair, query, sortedPairs]);
 
   const handlePress = useCallback(
-    (pair: string) => navigation.navigate("Tabs", { screen: "Terminal", params: { pair } }),
+    (pair: string) => navigation.navigate("Terminal", { pair }),
     [navigation],
   );
 
@@ -61,10 +65,47 @@ export const MarketsScreen = () => {
     [dispatch],
   );
 
-  // `refetch` returns a promise that `RefreshControl` will not await. A failed
-  // refetch is already reflected in the query's `isError`, so the result is
-  // deliberately discarded rather than handled twice.
-  const handleRefresh = useCallback(() => void refetch(), [refetch]);
+  // The spinner is driven by local state rather than by `isFetching`, because
+  // the gateway answers in about a millisecond and a spinner that never
+  // survives a frame reads as a dead gesture. It is held for
+  // `durations.refreshFloor`, which is also what makes R27 observable: prices
+  // have to keep ticking *underneath* something.
+  //
+  // A failed refetch is already reflected in the query's `isError`, so the
+  // result is deliberately discarded rather than handled twice.
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const spinnerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (spinnerTimer.current) clearTimeout(spinnerTimer.current);
+    },
+    [],
+  );
+
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    const startedAt = Date.now();
+    void refetch().finally(() => {
+      const remaining = durations.refreshFloor - (Date.now() - startedAt);
+      spinnerTimer.current = setTimeout(() => setIsRefreshing(false), Math.max(0, remaining));
+    });
+  }, [refetch]);
+
+  const byPair: Record<string, PairMeta> | undefined = data?.byPair;
+
+  const renderItem = useCallback(
+    ({ item }: { item: string }) => (
+      <MarketRow
+        pair={item}
+        meta={byPair?.[item]}
+        isFavourite={favourites.includes(item)}
+        onPress={handlePress}
+        onToggleFavourite={handleToggleFavourite}
+      />
+    ),
+    [byPair, favourites, handlePress, handleToggleFavourite],
+  );
 
   return (
     <View style={styles.screen}>
@@ -78,26 +119,18 @@ export const MarketsScreen = () => {
 
       <FlashList
         data={visiblePairs}
-        keyExtractor={pair => pair}
-        renderItem={({ item }) => (
-          <MarketRow
-            pair={item}
-            meta={data?.byPair[item]}
-            isFavourite={favourites.includes(item)}
-            onPress={handlePress}
-            onToggleFavourite={handleToggleFavourite}
-          />
-        )}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         // R27: pull-to-refresh reloads metadata only. The WebSocket is a
         // separate transport and is never touched, so prices keep ticking
         // underneath the spinner - which is the behaviour the brief asks for
         // and is invisible unless you look for it.
         refreshControl={
           <RefreshControl
-            refreshing={isFetching}
+            refreshing={isRefreshing}
             onRefresh={handleRefresh}
             tintColor={colors.brand}
-            colors={[colors.brand]}
+            colors={REFRESH_COLOURS}
             progressBackgroundColor={colors.bg.elevated}
           />
         }
@@ -113,21 +146,3 @@ export const MarketsScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg.base,
-  },
-  search: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  list: {
-    paddingBottom: sizes.bottomNav,
-  },
-  empty: {
-    padding: spacing.xl,
-    alignItems: "center",
-  },
-});

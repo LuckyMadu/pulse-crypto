@@ -6,6 +6,9 @@
  * visible: drag it and the emit rate on the card above tracks it live, because
  * the value goes over the WebSocket and retunes the server's `setInterval`.
  *
+ * The position/interval conversion lives in `../domain/scales`; this file is
+ * the gesture and the layout.
+ *
  * ## Built rather than installed
  *
  * `@react-native-community/slider` would do this, but it would be a native
@@ -23,22 +26,21 @@
  * `setInterval` sixty times a second is pointless churn.
  */
 
-import { memo, useCallback, useState } from "react";
-import { LayoutChangeEvent, StyleSheet, View } from "react-native";
+import { memo, useCallback, useEffect, useState } from "react";
+import { LayoutChangeEvent, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-} from "react-native-reanimated";
-import { config } from "@config";
-import { Surface, Text, colors, radii, spacing } from "@design-system";
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import { Surface, Text, sizes } from "@design-system";
+import {
+  INTERVAL_MAX_MS,
+  INTERVAL_MIN_MS,
+  toMs,
+  toRatio,
+} from "../domain/scales";
+import { styles } from "./IntervalSlider.styles";
 
-const THUMB_SIZE = 22;
-const TRACK_HEIGHT = 6;
-/** Snap granularity, so the label does not read 237ms. */
-const STEP_MS = 10;
+/** Lifted to a plain number so the Reanimated worklet captures a primitive. */
+const THUMB_SIZE = sizes.sliderThumb;
 
 export interface IntervalSliderProps {
   /** Current server-side interval, in ms. */
@@ -46,15 +48,6 @@ export interface IntervalSliderProps {
   /** Called on release with the chosen interval. */
   onCommit: (ms: number) => void;
 }
-
-const { min: MIN_MS, max: MAX_MS } = config.emitIntervalRange;
-
-const toRatio = (ms: number): number => (ms - MIN_MS) / (MAX_MS - MIN_MS);
-
-const toMs = (ratio: number): number => {
-  const raw = MIN_MS + ratio * (MAX_MS - MIN_MS);
-  return Math.min(MAX_MS, Math.max(MIN_MS, Math.round(raw / STEP_MS) * STEP_MS));
-};
 
 export const IntervalSlider = memo(({ value, onCommit }: IntervalSliderProps) => {
   const [trackWidth, setTrackWidth] = useState(0);
@@ -68,12 +61,34 @@ export const IntervalSlider = memo(({ value, onCommit }: IntervalSliderProps) =>
     setTrackWidth(event.nativeEvent.layout.width);
   }, []);
 
+  // `toRatio` and `toMs` are ordinary functions, so they exist only on the JS
+  // runtime. Calling one from inside a worklet throws "tried to synchronously
+  // call a remote function". So every conversion happens on this side, and the
+  // worklets below deal only in 0-1 ratios and shared values.
+  const serverRatio = toRatio(value);
+
+  const showRatio = useCallback((next: number) => {
+    setDisplayMs(toMs(next));
+  }, []);
+
+  const commitRatio = useCallback(
+    (next: number) => {
+      onCommit(toMs(next));
+    },
+    [onCommit],
+  );
+
   // While the user is not dragging, follow the server. This is what makes the
   // control correct with two clients connected: the interval is global, so if
   // another device moves it, this thumb should move too.
-  useDerivedValue(() => {
-    if (!isDragging.value) ratio.value = toRatio(value);
-  }, [value]);
+  //
+  // A plain effect rather than a worklet: `value` only moves when a `config`
+  // frame arrives, which is rare and not per-frame, so nothing here needs the
+  // UI thread. Writing a shared value from JS is supported, and the drag
+  // itself stays on the UI thread either way.
+  useEffect(() => {
+    if (!isDragging.value) ratio.value = serverRatio;
+  }, [serverRatio, isDragging, ratio]);
 
   const pan = Gesture.Pan()
     .onBegin(() => {
@@ -84,11 +99,11 @@ export const IntervalSlider = memo(({ value, onCommit }: IntervalSliderProps) =>
       if (trackWidth <= 0) return;
       const next = dragStartRatio.value + event.translationX / trackWidth;
       ratio.value = Math.min(1, Math.max(0, next));
-      runOnJS(setDisplayMs)(toMs(ratio.value));
+      runOnJS(showRatio)(ratio.value);
     })
     .onEnd(() => {
       isDragging.value = false;
-      runOnJS(onCommit)(toMs(ratio.value));
+      runOnJS(commitRatio)(ratio.value);
     })
     .onFinalize(() => {
       isDragging.value = false;
@@ -124,10 +139,10 @@ export const IntervalSlider = memo(({ value, onCommit }: IntervalSliderProps) =>
 
       <View style={styles.bounds}>
         <Text variant="caption" tone="muted">
-          {MIN_MS} ms
+          {INTERVAL_MIN_MS} ms
         </Text>
         <Text variant="caption" tone="muted">
-          {MAX_MS} ms
+          {INTERVAL_MAX_MS} ms
         </Text>
       </View>
 
@@ -140,46 +155,3 @@ export const IntervalSlider = memo(({ value, onCommit }: IntervalSliderProps) =>
 });
 
 IntervalSlider.displayName = "IntervalSlider";
-
-const styles = StyleSheet.create({
-  card: {
-    gap: spacing.sm,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  touchArea: {
-    // The visible track is 6pt tall; the gesture target must not be.
-    paddingVertical: spacing.md,
-    justifyContent: "center",
-  },
-  track: {
-    height: TRACK_HEIGHT,
-    backgroundColor: colors.bg.row,
-    borderRadius: radii.pill,
-    justifyContent: "center",
-  },
-  fill: {
-    position: "absolute",
-    left: 0,
-    height: TRACK_HEIGHT,
-    backgroundColor: colors.brand,
-    borderRadius: radii.pill,
-  },
-  thumb: {
-    position: "absolute",
-    left: 0,
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: radii.pill,
-    backgroundColor: colors.brand,
-    borderWidth: 2,
-    borderColor: colors.bg.elevated,
-  },
-  bounds: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-});

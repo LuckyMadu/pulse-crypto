@@ -5,8 +5,6 @@
  * typed without every call site restating the param list.
  */
 
-import { NavigatorScreenParams } from "@react-navigation/native";
-
 export type TabParamList = {
   Terminal: { pair?: string } | undefined;
   Markets: undefined;
@@ -14,14 +12,16 @@ export type TabParamList = {
   Settings: undefined;
 };
 
-export type RootStackParamList = {
-  Tabs: NavigatorScreenParams<TabParamList>;
-};
-
+/**
+ * The tab navigator is mounted directly under the container - there is no
+ * enclosing stack, so these are the only routes that exist. Declaring a
+ * wrapper route here would typecheck and then fail at runtime, because
+ * React Navigation resolves names against the mounted tree, not this type.
+ */
 declare global {
    
   namespace ReactNavigation {
      
-    interface RootParamList extends RootStackParamList {}
+    interface RootParamList extends TabParamList {}
   }
 }
