@@ -20,4 +20,21 @@ export const durations = {
   /** Buy/sell pressure meter. Slower: it is a trend, not an event. */
   meter: 300,
   fade: 200,
+  /** Live-dot tick pulse. Same asymmetry as the flash, for the same reason. */
+  pulseIn: 90,
+  pulseOut: 260,
+  /**
+   * Floor on how long the pull-to-refresh spinner stays up. `/pairs/meta`
+   * answers from a local gateway in about a millisecond, so a spinner bound
+   * straight to the request never survives a frame and the gesture reads as
+   * though nothing happened. This is a loading indicator rather than a
+   * feedback animation, so the 300 ms ceiling on the latter does not apply.
+   */
+  refreshFloor: 500,
 } as const;
+
+/**
+ * Peak scale of the live-dot pulse. Large enough to catch the eye at 6pt,
+ * small enough not to reflow the row it sits in.
+ */
+export const pulseScale = 1.8;

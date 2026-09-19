@@ -78,6 +78,8 @@ export const colors = {
     row: "#19212e",
     /** Pressed/hover state on rows and tiles. */
     rowActive: slate[1],
+    /** For a `Surface` that only wants the padding and radius, not a fill. */
+    transparent: "transparent",
   },
 
   text: {
@@ -119,6 +121,8 @@ export const colors = {
     /** Reconnecting, and the per-row dots while the socket is down. */
     offline: pink[4],
     warning: "#f5a623",
+    /** `warning` at 12%, for chip and banner backgrounds behind warning text. */
+    warningFill: "rgba(245,166,35,0.12)",
   },
 } as const;
 

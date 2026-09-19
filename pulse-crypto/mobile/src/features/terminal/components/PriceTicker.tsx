@@ -8,7 +8,7 @@
  */
 
 import { memo, useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
@@ -16,10 +16,14 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { Chip, Text, colors, durations, spacing, textVariants } from "@design-system";
+import { Chip, Text, colors, durations } from "@design-system";
 import { PairMeta } from "@protocol";
 import { Ticker } from "@realtime";
 import { formatCompact, formatPercent, formatPrice } from "@utils";
+import { styles } from "./PriceTicker.styles";
+
+/** Fallback when metadata has not arrived; most USDT pairs quote to 2dp. */
+const DEFAULT_PRICE_DECIMALS = 2;
 
 export interface PriceTickerProps {
   ticker: Ticker;
@@ -28,7 +32,7 @@ export interface PriceTickerProps {
 
 export const PriceTicker = memo(({ ticker, meta }: PriceTickerProps) => {
   const flash = useSharedValue(0);
-  const decimals = meta?.priceDecimals ?? 2;
+  const decimals = meta?.priceDecimals ?? DEFAULT_PRICE_DECIMALS;
 
   useEffect(() => {
     if (!ticker.direction || ticker.revision === 0) return;
@@ -81,26 +85,3 @@ const Stat = memo(({ label, value }: { label: string; value: string }) => (
 ));
 
 Stat.displayName = "Stat";
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    gap: spacing.md,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  price: {
-    ...textVariants.display,
-  },
-  stats: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  stat: {
-    gap: spacing.xs,
-  },
-});

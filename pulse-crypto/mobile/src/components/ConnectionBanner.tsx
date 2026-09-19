@@ -18,9 +18,10 @@
  */
 
 import { memo } from "react";
-import { StyleSheet, View } from "react-native";
-import { Text, colors, radii, spacing } from "@design-system";
+import { View } from "react-native";
+import { Text } from "@design-system";
 import { useConnectionStatus, useUpstreamState } from "@realtime";
+import { styles } from "./ConnectionBanner.styles";
 
 export const ConnectionBanner = memo(() => {
   const status = useConnectionStatus();
@@ -69,22 +70,3 @@ export const ConnectionBanner = memo(() => {
 });
 
 ConnectionBanner.displayName = "ConnectionBanner";
-
-const styles = StyleSheet.create({
-  banner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: radii.md,
-  },
-  down: {
-    backgroundColor: colors.down.fill,
-  },
-  warning: {
-    backgroundColor: colors.bg.row,
-  },
-});

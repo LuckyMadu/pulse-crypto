@@ -7,10 +7,10 @@
  */
 
 import { memo } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, TextInput, View } from "react-native";
 import { colors } from "../tokens/colors";
-import { radii, sizes, spacing } from "../tokens/spacing";
-import { fontFamily, fontSize } from "../tokens/typography";
+import { spacing } from "../tokens/spacing";
+import { styles } from "./SearchField.styles";
 import { Text } from "./Text";
 
 export interface SearchFieldProps {
@@ -68,51 +68,3 @@ export const SearchField = memo(
 );
 
 SearchField.displayName = "SearchField";
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.bg.elevated,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-    paddingHorizontal: spacing.md,
-    height: sizes.touchTarget,
-    gap: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    color: colors.text.primary,
-    fontFamily: fontFamily.body,
-    fontSize: fontSize.base,
-    // Android's TextInput carries vertical padding that misaligns it against
-    // the icon inside a fixed-height row.
-    paddingVertical: 0,
-  },
-  icon: {
-    width: 16,
-    height: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  iconLens: {
-    width: 11,
-    height: 11,
-    borderRadius: radii.pill,
-    borderWidth: 1.5,
-    borderColor: colors.text.muted,
-  },
-  iconHandle: {
-    position: "absolute",
-    right: 0,
-    bottom: 1,
-    width: 6,
-    height: 1.5,
-    backgroundColor: colors.text.muted,
-    transform: [{ rotate: "45deg" }],
-  },
-  clear: {
-    paddingHorizontal: spacing.xs,
-  },
-});

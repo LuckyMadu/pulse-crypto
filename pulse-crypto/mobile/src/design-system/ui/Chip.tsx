@@ -6,20 +6,11 @@
  */
 
 import { ReactNode, memo } from "react";
-import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
-import { colors } from "../tokens/colors";
-import { radii, spacing } from "../tokens/spacing";
-import { Text, TextTone } from "./Text";
+import { StyleProp, View, ViewStyle } from "react-native";
+import { CHIP_TEXT_TONES, ChipTone, styles, toneStyles } from "./Chip.styles";
+import { Text } from "./Text";
 
-export type ChipTone = "up" | "down" | "neutral" | "brand" | "warning";
-
-const TONE_STYLES: Record<ChipTone, { background: string; text: TextTone }> = {
-  up: { background: colors.up.fill, text: "up" },
-  down: { background: colors.down.fill, text: "down" },
-  neutral: { background: colors.bg.row, text: "secondary" },
-  brand: { background: colors.up.fill, text: "brand" },
-  warning: { background: "rgba(245,166,35,0.12)", text: "muted" },
-};
+export type { ChipTone };
 
 export interface ChipProps {
   label: string;
@@ -29,29 +20,13 @@ export interface ChipProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const Chip = memo(({ label, tone = "neutral", leading, style }: ChipProps) => {
-  const toneStyle = TONE_STYLES[tone];
-
-  return (
-    <View style={[styles.chip, { backgroundColor: toneStyle.background }, style]}>
-      {leading}
-      <Text variant="label" tone={toneStyle.text}>
-        {label}
-      </Text>
-    </View>
-  );
-});
+export const Chip = memo(({ label, tone = "neutral", leading, style }: ChipProps) => (
+  <View style={[styles.chip, toneStyles[tone], style]}>
+    {leading}
+    <Text variant="label" tone={CHIP_TEXT_TONES[tone]}>
+      {label}
+    </Text>
+  </View>
+));
 
 Chip.displayName = "Chip";
-
-const styles = StyleSheet.create({
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.sm,
-    alignSelf: "flex-start",
-  },
-});

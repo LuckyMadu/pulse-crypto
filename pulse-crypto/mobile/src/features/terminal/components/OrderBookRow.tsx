@@ -20,14 +20,15 @@
  */
 
 import { memo, useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { Text, colors, durations, sizes, spacing } from "@design-system";
+import { Text, durations } from "@design-system";
 import { formatPrice, formatQuantity } from "@utils";
+import { sideStyles, styles } from "./OrderBookRow.styles";
 
 export interface OrderBookRowProps {
   price: number;
@@ -57,11 +58,7 @@ export const OrderBookRow = memo(
     return (
       <View style={styles.row}>
         <Animated.View
-          style={[
-            styles.depthBar,
-            { backgroundColor: side === "bid" ? colors.up.fill : colors.down.fill },
-            barStyle,
-          ]}
+          style={[styles.depthBar, sideStyles[side], barStyle]}
           // Decorative: the numbers beside it already carry the information.
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
@@ -87,30 +84,3 @@ export const OrderBookRow = memo(
 );
 
 OrderBookRow.displayName = "OrderBookRow";
-
-const styles = StyleSheet.create({
-  row: {
-    height: sizes.orderBookRow,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.sm,
-  },
-  depthBar: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-  },
-  price: {
-    flex: 1,
-    textAlign: "left",
-  },
-  amount: {
-    flex: 1,
-    textAlign: "center",
-  },
-  total: {
-    flex: 1,
-    textAlign: "right",
-  },
-});

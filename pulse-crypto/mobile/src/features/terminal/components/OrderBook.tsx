@@ -16,10 +16,12 @@
  */
 
 import { memo, useMemo } from "react";
-import { StyleSheet, View } from "react-native";
-import { Text, colors, sizes, spacing } from "@design-system";
-import { Book, Level } from "@protocol";
+import { View } from "react-native";
+import { Text } from "@design-system";
+import { Book } from "@protocol";
 import { formatPrice } from "@utils";
+import { accumulateLevels, totalVolume } from "../domain/orderBook";
+import { styles } from "./OrderBook.styles";
 import { OrderBookRow } from "./OrderBookRow";
 
 /** Levels shown per side. The wire carries 20; eight fits without scrolling. */
@@ -32,33 +34,21 @@ export interface OrderBookProps {
   spreadPct: number;
 }
 
-interface CumulativeLevel {
-  price: number;
-  quantity: number;
-  cumulative: number;
-}
-
 /**
- * Accumulate outwards from the touch.
- *
- * Note this runs over the **full** 20 levels before slicing to the visible
- * eight, so `maxCumulative` reflects the whole book. Scaling the bars against
- * only the visible depth would make the eighth row always render at 100%,
- * which would look like a wall of liquidity that is not there.
+ * Accumulation runs over the **full** 20 levels before slicing to the visible
+ * eight, so the scale reflects the whole book. Scaling against only the
+ * visible depth would make the eighth row always render at 100%, which would
+ * look like a wall of liquidity that is not there.
  */
-const accumulate = (levels: Level[]): { rows: CumulativeLevel[]; max: number } => {
-  let running = 0;
-  const rows: CumulativeLevel[] = levels.map(([price, quantity]) => {
-    running += quantity;
-    return { price, quantity, cumulative: running };
-  });
-  return { rows: rows.slice(0, VISIBLE_LEVELS), max: running };
+const visibleSide = (levels: Book["bids"]) => {
+  const rows = accumulateLevels(levels);
+  return { rows: rows.slice(0, VISIBLE_LEVELS), max: totalVolume(rows) };
 };
 
 export const OrderBook = memo(
   ({ book, priceDecimals, spread, spreadPct }: OrderBookProps) => {
-    const bids = useMemo(() => accumulate(book.bids), [book.bids]);
-    const asks = useMemo(() => accumulate(book.asks), [book.asks]);
+    const bids = useMemo(() => visibleSide(book.bids), [book.bids]);
+    const asks = useMemo(() => visibleSide(book.asks), [book.asks]);
 
     // One scale across both sides, so a visibly longer bar always means more
     // volume regardless of which side it is on.
@@ -127,31 +117,3 @@ export const OrderBook = memo(
 );
 
 OrderBook.displayName = "OrderBook";
-
-const styles = StyleSheet.create({
-  header: {
-    height: sizes.orderBookHeader,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  headerPrice: { flex: 1, textAlign: "left" },
-  headerAmount: { flex: 1, textAlign: "center" },
-  headerTotal: { flex: 1, textAlign: "right" },
-  spread: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border.subtle,
-    marginVertical: spacing.xs,
-  },
-  empty: {
-    paddingVertical: spacing.xl,
-    alignItems: "center",
-  },
-});

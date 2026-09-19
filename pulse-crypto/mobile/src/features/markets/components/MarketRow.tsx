@@ -10,7 +10,9 @@
  * independently wakes only when *its* pair moves.
  *
  * `React.memo` then does real work: the props are the pair name, the metadata
- * and two callbacks, all stable, so a parent re-render costs nothing.
+ * and two callbacks, all stable, so a parent re-render costs nothing. The two
+ * press handlers are wrapped rather than written inline for the same reason -
+ * an inline arrow would hand `Pressable` a new reference on every tick.
  *
  * ## Why the flash is Reanimated and not state
  *
@@ -22,8 +24,8 @@
  * gauge is there to show.
  */
 
-import { memo, useEffect } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { memo, useCallback, useEffect } from "react";
+import { Pressable, View } from "react-native";
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
@@ -32,17 +34,11 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { LiveDot } from "@components";
-import {
-  Text,
-  colors,
-  durations,
-  radii,
-  sizes,
-  spacing,
-} from "@design-system";
+import { Text, colors, durations, sizes } from "@design-system";
 import { PairMeta } from "@protocol";
 import { useTicker } from "@realtime";
 import { formatPercent, formatPrice } from "@utils";
+import { styles } from "./MarketRow.styles";
 
 export interface MarketRowProps {
   pair: string;
@@ -54,6 +50,9 @@ export interface MarketRowProps {
 
 const FAVOURITE_ON = "\u2605";
 const FAVOURITE_OFF = "\u2606";
+
+/** Fallback when metadata has not arrived; most USDT pairs quote to 2dp. */
+const DEFAULT_PRICE_DECIMALS = 2;
 
 export const MarketRow = memo(
   ({ pair, meta, isFavourite, onPress, onToggleFavourite }: MarketRowProps) => {
@@ -79,12 +78,19 @@ export const MarketRow = memo(
       ),
     }));
 
+    const handlePress = useCallback(() => onPress(pair), [onPress, pair]);
+    const handleToggleFavourite = useCallback(
+      () => onToggleFavourite(pair),
+      [onToggleFavourite, pair],
+    );
+
     const changeTone = ticker.change24hPct >= 0 ? "up" : "down";
-    const decimals = meta?.priceDecimals ?? 2;
+    const decimals = meta?.priceDecimals ?? DEFAULT_PRICE_DECIMALS;
+    const hasTicked = ticker.timestamp !== 0;
 
     return (
       <Pressable
-        onPress={() => onPress(pair)}
+        onPress={handlePress}
         accessibilityRole="button"
         accessibilityLabel={`${meta?.displayName ?? pair}, ${formatPrice(ticker.price, decimals)}`}
       >
@@ -104,16 +110,16 @@ export const MarketRow = memo(
 
           <View style={styles.values}>
             <Text variant="numeric" tone="primary">
-              {ticker.timestamp === 0 ? "--" : formatPrice(ticker.price, decimals)}
+              {hasTicked ? formatPrice(ticker.price, decimals) : "--"}
             </Text>
             <Text variant="numericSmall" tone={changeTone}>
-              {ticker.timestamp === 0 ? "--" : formatPercent(ticker.change24hPct)}
+              {hasTicked ? formatPercent(ticker.change24hPct) : "--"}
             </Text>
           </View>
 
           <Pressable
-            onPress={() => onToggleFavourite(pair)}
-            hitSlop={12}
+            onPress={handleToggleFavourite}
+            hitSlop={sizes.hitSlop}
             accessibilityRole="button"
             accessibilityState={{ checked: isFavourite }}
             accessibilityLabel={
@@ -132,33 +138,3 @@ export const MarketRow = memo(
 );
 
 MarketRow.displayName = "MarketRow";
-
-const styles = StyleSheet.create({
-  row: {
-    height: sizes.marketRow,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: radii.md,
-    gap: spacing.sm,
-  },
-  identity: {
-    flex: 1,
-    gap: spacing.xxs,
-  },
-  pairLine: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  values: {
-    alignItems: "flex-end",
-    gap: spacing.xs,
-  },
-  favourite: {
-    width: 32,
-    alignItems: "flex-end",
-  },
-});

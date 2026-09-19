@@ -18,28 +18,29 @@
  * part that actually carries the design.
  */
 
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Text, colors, radii, sizes, spacing } from "@design-system";
+import { Text, colors } from "@design-system";
 import { MarketsScreen } from "@features/markets/MarketsScreen";
 import { SettingsScreen } from "@features/settings/SettingsScreen";
 import { TelemetryScreen } from "@features/telemetry/TelemetryScreen";
 import { TerminalScreen } from "@features/terminal/TerminalScreen";
+import { borderStyles, fillStyles, styles } from "./TabNavigator.styles";
 import { TabParamList } from "./types";
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
 /** A 20pt glyph built from bars, one shape per tab. */
 const TabGlyph = ({ name, active }: { name: keyof TabParamList; active: boolean }) => {
-  const tint = active ? colors.brand : colors.text.muted;
+  const fill = active ? fillStyles.active : fillStyles.inactive;
 
   if (name === "Terminal") {
     // A candlestick: three bars of differing heights.
     return (
       <View style={styles.glyphRow}>
-        <View style={[styles.bar, styles.barShort, { backgroundColor: tint }]} />
-        <View style={[styles.bar, styles.barTall, { backgroundColor: tint }]} />
-        <View style={[styles.bar, styles.barMid, { backgroundColor: tint }]} />
+        <View style={[styles.bar, styles.barShort, fill]} />
+        <View style={[styles.bar, styles.barTall, fill]} />
+        <View style={[styles.bar, styles.barMid, fill]} />
       </View>
     );
   }
@@ -48,9 +49,9 @@ const TabGlyph = ({ name, active }: { name: keyof TabParamList; active: boolean 
     // A list: three stacked rules.
     return (
       <View style={styles.glyphColumn}>
-        <View style={[styles.rule, { backgroundColor: tint }]} />
-        <View style={[styles.rule, { backgroundColor: tint }]} />
-        <View style={[styles.rule, { backgroundColor: tint }]} />
+        <View style={[styles.rule, fill]} />
+        <View style={[styles.rule, fill]} />
+        <View style={[styles.rule, fill]} />
       </View>
     );
   }
@@ -58,8 +59,8 @@ const TabGlyph = ({ name, active }: { name: keyof TabParamList; active: boolean 
   if (name === "Telemetry") {
     // A gauge: a ring with a notch.
     return (
-      <View style={[styles.ring, { borderColor: tint }]}>
-        <View style={[styles.needle, { backgroundColor: tint }]} />
+      <View style={[styles.ring, active ? borderStyles.active : borderStyles.inactive]}>
+        <View style={[styles.needle, fill]} />
       </View>
     );
   }
@@ -67,8 +68,8 @@ const TabGlyph = ({ name, active }: { name: keyof TabParamList; active: boolean 
   // Settings: a slider track with a handle.
   return (
     <View style={styles.glyphColumn}>
-      <View style={[styles.rule, { backgroundColor: tint }]} />
-      <View style={[styles.handle, { backgroundColor: tint }]} />
+      <View style={[styles.rule, fill]} />
+      <View style={[styles.handle, fill]} />
     </View>
   );
 };
@@ -99,65 +100,3 @@ export const TabNavigator = () => (
     <Tab.Screen name="Settings" component={SettingsScreen} />
   </Tab.Navigator>
 );
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.bg.topbar,
-    borderTopColor: colors.border.subtle,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    height: sizes.bottomNav + spacing.md,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.sm,
-  },
-  iconPill: {
-    width: 44,
-    height: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radii.pill,
-  },
-  iconPillActive: {
-    backgroundColor: colors.up.fill,
-  },
-  glyphRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 2,
-    height: 14,
-  },
-  glyphColumn: {
-    gap: 3,
-    width: 16,
-  },
-  bar: {
-    width: 3,
-    borderRadius: 1,
-  },
-  barShort: { height: 8 },
-  barTall: { height: 14 },
-  barMid: { height: 10 },
-  rule: {
-    height: 2,
-    width: "100%",
-    borderRadius: 1,
-  },
-  handle: {
-    width: 6,
-    height: 6,
-    borderRadius: radii.pill,
-    marginLeft: 4,
-  },
-  ring: {
-    width: 15,
-    height: 15,
-    borderRadius: radii.pill,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "flex-start",
-  },
-  needle: {
-    width: 2,
-    height: 6,
-    marginTop: 1,
-  },
-});

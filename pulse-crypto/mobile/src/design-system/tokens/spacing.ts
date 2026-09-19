@@ -22,12 +22,34 @@ export const spacing = {
 export const sizes = {
   topAppBar: 56,
   bottomNav: 64,
+  /** Tab bar's own height: `bottomNav` plus its vertical padding. */
+  tabBar: 80,
   /** Measured from mockup node 1:39. The depth overlay is sized against it. */
   orderBookRow: 32,
   orderBookHeader: 20,
   marketRow: 64,
   touchTarget: 44,
   liveDot: 6,
+  /**
+   * Bottom padding for a scrolling screen so its last row clears the tab bar.
+   * A token rather than `bottomNav + spacing.lg` at the call site: the sum is
+   * the thing being specified, and deriving it in three `.styles.ts` files
+   * invites one of them to drift.
+   */
+  tabBarClearance: 88,
+  /** Depth chart viewBox height. The SVG geometry is projected against it. */
+  depthChart: 120,
+  sliderThumb: 22,
+  sliderTrack: 6,
+  meterBar: 8,
+  /** Star column in a market row - wide enough not to shift the price column. */
+  favouriteColumn: 32,
+  /**
+   * Press-target padding for controls whose glyph is smaller than
+   * `touchTarget`. Applied via `hitSlop`, so it grows the target without
+   * changing layout.
+   */
+  hitSlop: 12,
 } as const;
 
 export const radii = {
@@ -42,4 +64,9 @@ export const radii = {
 export const borderWidth = {
   hairline: 1,
   thick: 2,
+  /**
+   * Stroke for the depth chart paths. Sub-pixel because it is drawn inside a
+   * 0-100 viewBox that SVG then scales up to the container width.
+   */
+  chartStroke: 0.4,
 } as const;

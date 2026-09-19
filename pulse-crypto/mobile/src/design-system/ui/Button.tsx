@@ -9,9 +9,8 @@
  */
 
 import { memo } from "react";
-import { Pressable, StyleProp, StyleSheet, ViewStyle } from "react-native";
-import { colors } from "../tokens/colors";
-import { borderWidth, radii, sizes, spacing } from "../tokens/spacing";
+import { Pressable, StyleProp, ViewStyle } from "react-native";
+import { styles } from "./Button.styles";
 import { Text } from "./Text";
 
 export interface ButtonProps {
@@ -46,26 +45,3 @@ export const Button = memo(
 );
 
 Button.displayName = "Button";
-
-const styles = StyleSheet.create({
-  base: {
-    minHeight: sizes.touchTarget,
-    paddingHorizontal: spacing.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radii.md,
-  },
-  primary: {
-    backgroundColor: colors.brand,
-  },
-  outlined: {
-    borderWidth: borderWidth.hairline,
-    borderColor: colors.brand,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  disabled: {
-    opacity: 0.4,
-  },
-});

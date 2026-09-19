@@ -8,11 +8,12 @@
  * per screen rather than a header renderer re-created on navigation.
  */
 
-import { ReactNode, memo } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { ReactNode, memo, useMemo } from "react";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text, colors, sizes, spacing } from "@design-system";
+import { Text, sizes } from "@design-system";
 import { ConnectionIndicator } from "./ConnectionIndicator";
+import { styles } from "./TopAppBar.styles";
 
 export interface TopAppBarProps {
   title: string;
@@ -23,14 +24,15 @@ export interface TopAppBarProps {
 
 export const TopAppBar = memo(({ title, subtitle, onBack, trailing }: TopAppBarProps) => {
   const insets = useSafeAreaInsets();
+  const insetStyle = useMemo(() => ({ paddingTop: insets.top }), [insets.top]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, insetStyle]}>
       <View style={styles.bar}>
         {onBack ? (
           <Pressable
             onPress={onBack}
-            hitSlop={12}
+            hitSlop={sizes.hitSlop}
             accessibilityRole="button"
             accessibilityLabel="Go back"
             style={styles.back}
@@ -59,24 +61,3 @@ export const TopAppBar = memo(({ title, subtitle, onBack, trailing }: TopAppBarP
 });
 
 TopAppBar.displayName = "TopAppBar";
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.bg.topbar,
-  },
-  bar: {
-    height: sizes.topAppBar,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
-  },
-  back: {
-    width: 28,
-    justifyContent: "center",
-  },
-  titles: {
-    flex: 1,
-    gap: spacing.xxs,
-  },
-});

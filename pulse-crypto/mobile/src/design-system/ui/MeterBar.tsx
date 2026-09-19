@@ -9,24 +9,18 @@
  * which is the behaviour R20 is asking about.
  */
 
-import { memo, useEffect } from "react";
-import { StyleSheet, View } from "react-native";
+import { memo, useEffect, useMemo } from "react";
+import { View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { colors } from "../tokens/colors";
 import { durations } from "../tokens/motion";
-import { radii } from "../tokens/spacing";
+import { sizes } from "../tokens/spacing";
+import { MeterTone, styles, toneStyles } from "./MeterBar.styles";
 
-export type MeterTone = "up" | "down" | "neutral";
-
-const TONE_COLOURS: Record<MeterTone, string> = {
-  up: colors.up.base,
-  down: colors.down.base,
-  neutral: colors.text.muted,
-};
+export type { MeterTone };
 
 export interface MeterBarProps {
   /** 0-100. Clamped, because a derived percentage should never break layout. */
@@ -37,7 +31,7 @@ export interface MeterBarProps {
 }
 
 export const MeterBar = memo(
-  ({ value, tone = "up", height = 6, accessibilityLabel }: MeterBarProps) => {
+  ({ value, tone = "up", height = sizes.sliderTrack, accessibilityLabel }: MeterBarProps) => {
     const progress = useSharedValue(clamp(value));
 
     useEffect(() => {
@@ -45,21 +39,18 @@ export const MeterBar = memo(
     }, [progress, value]);
 
     const fillStyle = useAnimatedStyle(() => ({ width: `${progress.value}%` }));
+    // The one genuinely caller-driven dimension. Memoised so a pressure tick
+    // does not allocate a style object on every frame.
+    const heightStyle = useMemo(() => ({ height }), [height]);
 
     return (
       <View
-        style={[styles.track, { height, borderRadius: height / 2 }]}
+        style={[styles.track, heightStyle]}
         accessibilityRole="progressbar"
         accessibilityLabel={accessibilityLabel}
         accessibilityValue={{ min: 0, max: 100, now: Math.round(clamp(value)) }}
       >
-        <Animated.View
-          style={[
-            styles.fill,
-            { backgroundColor: TONE_COLOURS[tone], borderRadius: height / 2 },
-            fillStyle,
-          ]}
-        />
+        <Animated.View style={[styles.fill, toneStyles[tone], fillStyle]} />
       </View>
     );
   },
@@ -71,15 +62,3 @@ const clamp = (value: number): number => {
   if (!Number.isFinite(value)) return 0;
   return Math.min(100, Math.max(0, value));
 };
-
-const styles = StyleSheet.create({
-  track: {
-    width: "100%",
-    backgroundColor: colors.bg.row,
-    borderRadius: radii.pill,
-    overflow: "hidden",
-  },
-  fill: {
-    height: "100%",
-  },
-});

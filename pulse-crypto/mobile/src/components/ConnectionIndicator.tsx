@@ -9,39 +9,35 @@
  */
 
 import { memo } from "react";
-import { StyleSheet, View } from "react-native";
-import { Chip, colors, radii, sizes } from "@design-system";
+import { View } from "react-native";
+import { Chip, ChipTone } from "@design-system";
 import { ConnectionStatus, useConnectionStatus } from "@realtime";
+import { dotStyles, styles } from "./ConnectionIndicator.styles";
 
-const STATUS_PRESENTATION: Record<
-  ConnectionStatus,
-  { label: string; tone: "brand" | "warning" | "down"; dot: string }
-> = {
-  connecting: { label: "Connecting", tone: "warning", dot: colors.status.warning },
-  live: { label: "Live", tone: "brand", dot: colors.status.live },
-  reconnecting: { label: "Reconnecting", tone: "warning", dot: colors.status.warning },
-  offline: { label: "Offline", tone: "down", dot: colors.status.offline },
+const STATUS_LABELS: Record<ConnectionStatus, string> = {
+  connecting: "Connecting",
+  live: "Live",
+  reconnecting: "Reconnecting",
+  offline: "Offline",
+};
+
+const STATUS_TONES: Record<ConnectionStatus, ChipTone> = {
+  connecting: "warning",
+  live: "brand",
+  reconnecting: "warning",
+  offline: "down",
 };
 
 export const ConnectionIndicator = memo(() => {
   const status = useConnectionStatus();
-  const presentation = STATUS_PRESENTATION[status];
 
   return (
     <Chip
-      label={presentation.label}
-      tone={presentation.tone}
-      leading={<View style={[styles.dot, { backgroundColor: presentation.dot }]} />}
+      label={STATUS_LABELS[status]}
+      tone={STATUS_TONES[status]}
+      leading={<View style={[styles.dot, dotStyles[status]]} />}
     />
   );
 });
 
 ConnectionIndicator.displayName = "ConnectionIndicator";
-
-const styles = StyleSheet.create({
-  dot: {
-    width: sizes.liveDot,
-    height: sizes.liveDot,
-    borderRadius: radii.pill,
-  },
-});

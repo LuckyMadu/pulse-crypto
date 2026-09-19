@@ -19,16 +19,16 @@
  * registers as activity.
  */
 
-import { memo, useEffect } from "react";
-import { StyleSheet } from "react-native";
+import { memo, useEffect, useMemo } from "react";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { colors, radii, sizes } from "@design-system";
+import { durations, pulseScale, sizes } from "@design-system";
 import { useConnectionStatus, useIsPairLive } from "@realtime";
+import { stateStyles, styles } from "./LiveDot.styles";
 
 export interface LiveDotProps {
   timestamp: number;
@@ -45,8 +45,8 @@ export const LiveDot = memo(({ timestamp, revision, size = sizes.liveDot }: Live
   useEffect(() => {
     if (revision === 0) return;
     pulse.value = withSequence(
-      withTiming(1.8, { duration: 90 }),
-      withTiming(1, { duration: 260 }),
+      withTiming(pulseScale, { duration: durations.pulseIn }),
+      withTiming(1, { duration: durations.pulseOut }),
     );
   }, [pulse, revision]);
 
@@ -54,31 +54,23 @@ export const LiveDot = memo(({ timestamp, revision, size = sizes.liveDot }: Live
     transform: [{ scale: pulse.value }],
   }));
 
-  const colour =
+  const sizeStyle = useMemo(() => ({ width: size, height: size }), [size]);
+
+  const state =
     status === "offline" || status === "reconnecting"
-      ? colors.status.offline
+      ? "offline"
       : isLive
-        ? colors.status.live
-        : colors.status.stale;
+        ? "live"
+        : "stale";
 
   return (
     <Animated.View
       accessibilityLabel={
         status === "live" ? (isLive ? "Receiving live updates" : "No recent updates") : "Disconnected"
       }
-      style={[
-        styles.dot,
-        { width: size, height: size, backgroundColor: colour },
-        animatedStyle,
-      ]}
+      style={[styles.dot, sizeStyle, stateStyles[state], animatedStyle]}
     />
   );
 });
 
 LiveDot.displayName = "LiveDot";
-
-const styles = StyleSheet.create({
-  dot: {
-    borderRadius: radii.pill,
-  },
-});

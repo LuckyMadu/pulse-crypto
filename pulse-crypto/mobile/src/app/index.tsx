@@ -14,7 +14,7 @@
  * the two do not currently talk to each other.
  */
 
-import { StatusBar, StyleSheet } from "react-native";
+import { StatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Provider } from "react-redux";
@@ -22,6 +22,7 @@ import { colors } from "@design-system";
 import { RootNavigator } from "@navigation";
 import { MarketStreamProvider } from "@realtime";
 import { store } from "@store";
+import { styles } from "./index.styles";
 
 export const App = () => (
   <GestureHandlerRootView style={styles.root}>
@@ -35,10 +36,3 @@ export const App = () => (
     </SafeAreaProvider>
   </GestureHandlerRootView>
 );
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg.root,
-  },
-});

@@ -24,9 +24,9 @@
  */
 
 import { useCallback } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { ConnectionBanner, TopAppBar } from "@components";
-import { Chip, Text, colors, sizes, spacing } from "@design-system";
+import { Chip, Text } from "@design-system";
 import {
   useConnectionStatus,
   useEmitInterval,
@@ -39,6 +39,7 @@ import { formatBytes } from "@utils";
 import { FpsGauge } from "./components/FpsGauge";
 import { IntervalSlider } from "./components/IntervalSlider";
 import { MetricCard } from "./components/MetricCard";
+import { styles } from "./TelemetryScreen.styles";
 
 export const TelemetryScreen = () => {
   const client = useMarketStream();
@@ -148,22 +149,3 @@ export const TelemetryScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg.base,
-  },
-  content: {
-    padding: spacing.md,
-    paddingBottom: sizes.bottomNav + spacing.lg,
-    gap: spacing.md,
-  },
-  row: {
-    flexDirection: "row",
-    gap: spacing.md,
-  },
-  footer: {
-    paddingTop: spacing.sm,
-  },
-});

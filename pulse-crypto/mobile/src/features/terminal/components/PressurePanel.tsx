@@ -8,9 +8,10 @@
  */
 
 import { memo } from "react";
-import { StyleSheet, View } from "react-native";
-import { MeterBar, Surface, Text, spacing } from "@design-system";
+import { View } from "react-native";
+import { MeterBar, Surface, Text } from "@design-system";
 import { formatPrice } from "@utils";
+import { styles } from "./PressurePanel.styles";
 
 export interface PressurePanelProps {
   buyPressure: number;
@@ -70,26 +71,3 @@ export const PressurePanel = memo(
 );
 
 PressurePanel.displayName = "PressurePanel";
-
-const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: spacing.md,
-    gap: spacing.md,
-  },
-  meters: {
-    gap: spacing.md,
-  },
-  meter: {
-    gap: spacing.sm,
-  },
-  meterHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  spreadRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-});

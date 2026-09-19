@@ -8,24 +8,22 @@
 
 import { ReactNode } from "react";
 import { StyleProp, View, ViewProps, ViewStyle } from "react-native";
-import { colors } from "../tokens/colors";
-import { borderWidth, radii, spacing } from "../tokens/spacing";
+import {
+  SurfaceLevel,
+  SurfacePadding,
+  SurfaceRadius,
+  levelStyles,
+  paddingStyles,
+  radiusStyles,
+  styles,
+} from "./Surface.styles";
 
-type Level = "base" | "elevated" | "row" | "transparent";
-type Padding = keyof typeof spacing;
-type Radius = keyof typeof radii;
-
-const LEVEL_COLOURS: Record<Level, string> = {
-  base: colors.bg.base,
-  elevated: colors.bg.elevated,
-  row: colors.bg.row,
-  transparent: "transparent",
-};
+export type { SurfaceLevel, SurfacePadding, SurfaceRadius };
 
 export interface SurfaceProps extends Omit<ViewProps, "style"> {
-  level?: Level;
-  padding?: Padding;
-  radius?: Radius;
+  level?: SurfaceLevel;
+  padding?: SurfacePadding;
+  radius?: SurfaceRadius;
   bordered?: boolean;
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
@@ -42,15 +40,10 @@ export const Surface = ({
 }: SurfaceProps) => (
   <View
     style={[
-      {
-        backgroundColor: LEVEL_COLOURS[level],
-        padding: spacing[padding],
-        borderRadius: radii[radius],
-      },
-      bordered && {
-        borderWidth: borderWidth.hairline,
-        borderColor: colors.border.subtle,
-      },
+      levelStyles[level],
+      paddingStyles[padding],
+      radiusStyles[radius],
+      bordered && styles.bordered,
       style,
     ]}
     {...rest}

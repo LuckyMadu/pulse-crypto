@@ -7,9 +7,9 @@
  */
 
 import { ReactNode, memo } from "react";
-import { Pressable, StyleProp, StyleSheet, ViewStyle } from "react-native";
-import { colors } from "../tokens/colors";
-import { radii, sizes } from "../tokens/spacing";
+import { Pressable, StyleProp, ViewStyle } from "react-native";
+import { sizes } from "../tokens/spacing";
+import { styles } from "./IconButton.styles";
 
 export interface IconButtonProps {
   onPress: () => void;
@@ -34,7 +34,7 @@ export const IconButton = memo(
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={accessibilityState}
-      hitSlop={12}
+      hitSlop={sizes.hitSlop}
       style={({ pressed }) => [
         styles.button,
         active && styles.active,
@@ -48,19 +48,3 @@ export const IconButton = memo(
 );
 
 IconButton.displayName = "IconButton";
-
-const styles = StyleSheet.create({
-  button: {
-    minWidth: sizes.touchTarget,
-    minHeight: sizes.touchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radii.pill,
-  },
-  active: {
-    backgroundColor: colors.up.fill,
-  },
-  pressed: {
-    opacity: 0.6,
-  },
-});

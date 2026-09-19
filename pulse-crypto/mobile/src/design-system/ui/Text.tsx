@@ -9,27 +9,10 @@
 
 import { ReactNode } from "react";
 import { StyleProp, Text as RNText, TextProps as RNTextProps, TextStyle } from "react-native";
-import { colors } from "../tokens/colors";
 import { TextVariant, textVariants } from "../tokens/typography";
+import { TextTone, toneStyles } from "./Text.styles";
 
-export type TextTone =
-  | "primary"
-  | "secondary"
-  | "muted"
-  | "up"
-  | "down"
-  | "brand"
-  | "inverted";
-
-const TONE_COLOURS: Record<TextTone, string> = {
-  primary: colors.text.primary,
-  secondary: colors.text.secondary,
-  muted: colors.text.muted,
-  up: colors.up.text,
-  down: colors.down.text,
-  brand: colors.brand,
-  inverted: colors.text.inverted,
-};
+export type { TextTone };
 
 export interface TextProps extends Omit<RNTextProps, "style"> {
   variant?: TextVariant;
@@ -49,7 +32,7 @@ export const Text = ({
     // `allowFontScaling` stays on for accessibility, but numeric columns are
     // laid out with flex rather than fixed widths so a larger system font size
     // does not clip them.
-    style={[textVariants[variant], { color: TONE_COLOURS[tone] }, style]}
+    style={[textVariants[variant], toneStyles[tone], style]}
     {...rest}
   >
     {children}

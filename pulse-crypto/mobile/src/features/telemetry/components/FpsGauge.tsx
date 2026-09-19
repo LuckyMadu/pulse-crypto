@@ -14,21 +14,38 @@
  * Redux instead of the keyed external store, *this* is the number that would
  * visibly collapse. Holding 60 here while the gateway ingests 2000 msg/s is
  * the architecture being measured rather than asserted.
+ *
+ * The banding lives in `../domain/scales`; this file only decides what each
+ * band looks like.
  */
 
 import { memo } from "react";
-import { StyleSheet, View } from "react-native";
-import { MeterBar, Surface, Text, spacing } from "@design-system";
+import { View } from "react-native";
+import { MeterBar, MeterTone, Surface, Text, TextTone, sizes } from "@design-system";
+import { FpsHealth, fpsHealth } from "../domain/scales";
+import { styles } from "./FpsGauge.styles";
+
+/** The scale the meter is drawn against, not a health threshold. */
+const FPS_CEILING = 60;
+
+const METER_TONES: Record<FpsHealth, MeterTone> = {
+  healthy: "up",
+  fair: "neutral",
+  poor: "down",
+};
+
+const TEXT_TONES: Record<FpsHealth, TextTone> = {
+  healthy: "up",
+  fair: "secondary",
+  poor: "down",
+};
 
 export interface FpsGaugeProps {
   fps: number;
 }
 
 export const FpsGauge = memo(({ fps }: FpsGaugeProps) => {
-  // 55 rather than 60: a healthy JS thread sampled over a one-second window
-  // routinely reads 57-59, and colouring that amber would cry wolf.
-  const tone = fps >= 55 ? "up" : fps >= 40 ? "neutral" : "down";
-  const textTone = fps >= 55 ? "up" : fps >= 40 ? "secondary" : "down";
+  const health = fpsHealth(fps);
 
   return (
     <Surface level="elevated" padding="md" radius="md" style={styles.card}>
@@ -36,15 +53,15 @@ export const FpsGauge = memo(({ fps }: FpsGaugeProps) => {
         <Text variant="label" tone="muted">
           JS Thread Frame Rate
         </Text>
-        <Text variant="numericLarge" tone={textTone}>
+        <Text variant="numericLarge" tone={TEXT_TONES[health]}>
           {fps} FPS
         </Text>
       </View>
 
       <MeterBar
-        value={(Math.min(fps, 60) / 60) * 100}
-        tone={tone}
-        height={8}
+        value={(Math.min(fps, FPS_CEILING) / FPS_CEILING) * 100}
+        tone={METER_TONES[health]}
+        height={sizes.meterBar}
         accessibilityLabel={`JavaScript thread frame rate ${fps} frames per second`}
       />
 
@@ -57,14 +74,3 @@ export const FpsGauge = memo(({ fps }: FpsGaugeProps) => {
 });
 
 FpsGauge.displayName = "FpsGauge";
-
-const styles = StyleSheet.create({
-  card: {
-    gap: spacing.sm,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-});

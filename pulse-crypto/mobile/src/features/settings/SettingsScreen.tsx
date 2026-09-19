@@ -11,10 +11,11 @@
  * keeps the scope of the submission legible to whoever is reading it.
  */
 
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import { TopAppBar } from "@components";
 import { config } from "@config";
-import { Surface, Text, colors, sizes, spacing } from "@design-system";
+import { Surface, Text } from "@design-system";
+import { styles } from "./SettingsScreen.styles";
 
 const OMITTED = [
   "API Keys, Security and Sign Out - account features with no backing service",
@@ -68,29 +69,3 @@ export const SettingsScreen = () => (
     </View>
   </View>
 );
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg.base,
-  },
-  content: {
-    padding: spacing.md,
-    paddingBottom: sizes.bottomNav,
-    gap: spacing.md,
-  },
-  card: {
-    gap: spacing.sm,
-  },
-  list: {
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  listItem: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  listText: {
-    flex: 1,
-  },
-});

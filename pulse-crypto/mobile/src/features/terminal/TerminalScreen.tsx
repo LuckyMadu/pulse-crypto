@@ -12,10 +12,10 @@
  */
 
 import { useCallback, useMemo } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { ConnectionBanner, TopAppBar } from "@components";
-import { IconButton, Text, colors, sizes, spacing } from "@design-system";
+import { IconButton, Text } from "@design-system";
 import { TabParamList } from "@navigation";
 import {
   useClockTick,
@@ -35,6 +35,7 @@ import { MarketDepth } from "./components/MarketDepth";
 import { OrderBook } from "./components/OrderBook";
 import { PressurePanel } from "./components/PressurePanel";
 import { PriceTicker } from "./components/PriceTicker";
+import { styles } from "./TerminalScreen.styles";
 
 const FAVOURITE_ON = "\u2605";
 const FAVOURITE_OFF = "\u2606";
@@ -132,25 +133,3 @@ export const TerminalScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg.base,
-  },
-  content: {
-    paddingBottom: sizes.bottomNav + spacing.lg,
-    gap: spacing.md,
-  },
-  section: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    paddingHorizontal: spacing.md,
-  },
-  empty: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

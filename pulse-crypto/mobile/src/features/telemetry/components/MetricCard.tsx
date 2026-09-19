@@ -7,8 +7,9 @@
  */
 
 import { memo } from "react";
-import { StyleSheet, View } from "react-native";
-import { Surface, Text, TextTone, spacing } from "@design-system";
+import { View } from "react-native";
+import { Surface, Text, TextTone } from "@design-system";
+import { styles } from "./MetricCard.styles";
 
 export interface MetricCardProps {
   label: string;
@@ -44,16 +45,3 @@ export const MetricCard = memo(
 );
 
 MetricCard.displayName = "MetricCard";
-
-const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    gap: spacing.sm,
-    minWidth: 140,
-  },
-  valueRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: spacing.xs,
-  },
-});
