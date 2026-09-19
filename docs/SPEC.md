@@ -7,7 +7,7 @@ completeness is checkable by `grep` rather than by trust:
 
 ```bash
 # which requirements are covered by tests?
-rg -o 'R\d+' --no-filename backend/src mobile/src | sort -u
+rg -o 'R\d+' --no-filename pulse-crypto/*/src | sort -u
 
 # which commits touched a requirement?
 git log --oneline --grep 'R12'
@@ -89,7 +89,7 @@ Status legend: `[x]` implemented and verified, `[~]` partially implemented (devi
 
 | ID | Requirement | Acceptance criterion |
 |----|-------------|----------------------|
-| R35 | Complete source code shared via a Git repo. | One repo containing `backend/` and `mobile/`, with commits in meaningful slices. |
+| R35 | Complete source code shared via a Git repo. | One repo containing `pulse-crypto/backend/` and `pulse-crypto/mobile/`, with commits in meaningful slices. |
 | R36 | Screen recording of the app. | Recording follows the shot list in the README. |
 | R37 | README containing setup instructions, build and run instructions, architectural decisions, assumptions made, trade-offs considered, and how AI-assisted development tools were used. | All six sections present. |
 

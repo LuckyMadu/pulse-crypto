@@ -4,7 +4,7 @@ Ingests Binance public market streams, conflates them per pair, and fans the res
 WebSocket at a configurable interval.
 
 The architecture, the buffering strategy and the wire protocol are documented once in the
-[root README](../README.md) rather than duplicated here. This file is the operational summary.
+[root README](../../README.md) rather than duplicated here. This file is the operational summary.
 
 ## Run
 

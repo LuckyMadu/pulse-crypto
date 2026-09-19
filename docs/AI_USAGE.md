@@ -33,7 +33,7 @@ feat(backend): conflation buffer with dirty-set flush [R4,R5,R7]
 Which makes coverage a query rather than a claim:
 
 ```bash
-rg -o 'R\d+' backend/src mobile/src | sort -u    # what the code and tests cover
+rg -o 'R\d+' pulse-crypto/*/src | sort -u        # what the code and tests cover
 git log --oneline --grep 'R6'                     # what touched a requirement
 ```
 

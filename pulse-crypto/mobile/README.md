@@ -2,7 +2,7 @@
 
 Bare React Native 0.86 client for the [PulseCrypto gateway](../backend). Setup prerequisites, the
 state architecture and the requirements traceability table live in the
-[root README](../README.md); this file is the operational summary.
+[root README](../../README.md); this file is the operational summary.
 
 ## Run
 
@@ -43,7 +43,7 @@ src/
 
 1. **Tick data never goes into Redux.** It lives in `realtime/marketStore.ts`, a keyed external
    store read through `useSyncExternalStore`, so a price change wakes one row rather than the tree.
-   See [ADR-0002](../docs/adr/0002-external-store-for-ticks.md).
+   See [ADR-0002](../../docs/adr/0002-external-store-for-ticks.md).
 2. **`types/protocol.ts` is generated.** Change it in the backend and run `npm run sync:protocol`.
 3. **Every number renders in JetBrains Mono.** Monospaced digits are tabular, so a price ticking
    from `64,239.50` to `64,240.00` causes no reflow. Use the `numeric` text variants.

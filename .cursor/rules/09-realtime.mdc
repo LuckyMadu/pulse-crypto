@@ -1,6 +1,6 @@
 ---
 description: The streaming layer — conflation, backpressure, and keeping 10 Hz tick data out of Redux.
-globs: ["backend/src/**/*.ts", "mobile/src/realtime/**/*.ts", "mobile/src/realtime/**/*.tsx"]
+globs: ["pulse-crypto/backend/src/**/*.ts", "pulse-crypto/mobile/src/realtime/**/*.ts", "pulse-crypto/mobile/src/realtime/**/*.tsx"]
 alwaysApply: true
 ---
 
@@ -24,7 +24,7 @@ place is the single most expensive mistake available in this codebase.
 - **FORBIDDEN: dispatching tick data to Redux.** A dispatch per tick runs every
   reducer and wakes every `useSelector` in the tree, roughly 50 times a second.
   This is the failure mode the architecture exists to avoid.
-- REQUIRED: tick data lives in `mobile/src/realtime/marketStore.ts` with a
+- REQUIRED: tick data lives in `pulse-crypto/mobile/src/realtime/marketStore.ts` with a
   **per-pair listener registry**, read through `useSyncExternalStore`.
 - REQUIRED: `getSnapshot` MUST return a referentially stable value. Store frozen
   per-pair snapshot objects and swap the reference only when that pair changes.
