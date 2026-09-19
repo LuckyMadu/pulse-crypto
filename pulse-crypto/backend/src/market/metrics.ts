@@ -5,7 +5,7 @@
  * be tested by calling a function with two arrays.
  */
 
-import { Book, Level } from "../types/protocol";
+import { Level } from "../types/protocol";
 
 export interface SpreadResult {
   spread: number;
@@ -78,63 +78,6 @@ const sumNotional = (levels: Level[]): number => {
     }
   }
   return total;
-};
-
-export interface DepthPoint {
-  price: number;
-  /** Running total of quantity from the mid outwards to this level. */
-  cumulative: number;
-}
-
-export interface CumulativeDepth {
-  bids: DepthPoint[];
-  asks: DepthPoint[];
-  midPrice: number;
-  /** Largest cumulative value on either side, for scaling the chart's y axis. */
-  maxCumulative: number;
-}
-
-/**
- * Cumulative depth curves for the market-depth chart.
- *
- * Accumulation runs outwards from the mid on both sides, which is what makes
- * the classic depth chart shape: each point answers "how much volume is
- * available between the mid and this price". The client renders bids
- * accumulating leftward and asks rightward.
- *
- * Computed on the client in this build - it is included here because it is the
- * same maths, it is pure, and the only reason not to serve it is that the
- * client already has the book.
- */
-export const computeCumulativeDepth = (book: Book): CumulativeDepth => {
-  const bestBid = book.bids[0]?.[0] ?? 0;
-  const bestAsk = book.asks[0]?.[0] ?? 0;
-  const midPrice = bestBid > 0 && bestAsk > 0 ? (bestBid + bestAsk) / 2 : bestBid || bestAsk;
-
-  const bids = accumulate(book.bids);
-  const asks = accumulate(book.asks);
-
-  const maxCumulative = Math.max(
-    bids[bids.length - 1]?.cumulative ?? 0,
-    asks[asks.length - 1]?.cumulative ?? 0,
-  );
-
-  return { bids, asks, midPrice, maxCumulative };
-};
-
-const accumulate = (levels: Level[]): DepthPoint[] => {
-  const points: DepthPoint[] = [];
-  let running = 0;
-
-  for (const level of levels) {
-    const price = level[0];
-    const quantity = level[1];
-    if (!Number.isFinite(price) || !Number.isFinite(quantity)) continue;
-    running += quantity;
-    points.push({ price, cumulative: round(running, 8) });
-  }
-
-  return points;
 };
 
 /**

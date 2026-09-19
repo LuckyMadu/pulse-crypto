@@ -9,7 +9,7 @@
  * handler, where they are only reachable through a live connection.
  */
 
-import { computeCumulativeDepth, computePressure, computeSpread } from "../metrics";
+import { computePressure, computeSpread } from "../metrics";
 
 describe("R18 spread", () => {
   it("R18 computes absolute spread and expresses it relative to the mid price", () => {
@@ -78,35 +78,5 @@ describe("R18 buy/sell pressure", () => {
     );
 
     expect(withJunk).toEqual({ buyPressure: 50, sellPressure: 50 });
-  });
-});
-
-describe("R23 cumulative depth", () => {
-  it("R23 accumulates outwards from the mid on each side", () => {
-    const depth = computeCumulativeDepth({
-      bids: [
-        [99, 1],
-        [98, 2],
-        [97, 3],
-      ],
-      asks: [
-        [101, 1],
-        [102, 1],
-      ],
-    });
-
-    expect(depth.bids.map(point => point.cumulative)).toEqual([1, 3, 6]);
-    expect(depth.asks.map(point => point.cumulative)).toEqual([1, 2]);
-    expect(depth.midPrice).toBe(100);
-    // Drives the chart's y-axis scale, so it must be the max across both sides.
-    expect(depth.maxCumulative).toBe(6);
-  });
-
-  it("R23 survives a one-sided book", () => {
-    const depth = computeCumulativeDepth({ bids: [[99, 2]], asks: [] });
-
-    expect(depth.midPrice).toBe(99);
-    expect(depth.asks).toEqual([]);
-    expect(depth.maxCumulative).toBe(2);
   });
 });
