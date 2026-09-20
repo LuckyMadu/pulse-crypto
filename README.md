@@ -3,6 +3,10 @@
 A real-time cryptocurrency market data pipeline: an Express gateway that ingests Binance public
 market streams, conflates them, and fans them out over WebSocket to a bare React Native client.
 
+Built as a time-boxed engineering exercise, so it optimises for one thing - sustained update rates
+with a UI that stays responsive under them - and trades away feature breadth to get there. What was
+left out, and why, is in [Deliberately not built](#deliberately-not-built).
+
 | | |
 |---|---|
 | **Backend** | Node 20+, Express 5, `ws`, TypeScript |
@@ -46,6 +50,7 @@ descend into the source tree to find the ADRs.
 - [Trade-offs considered](#trade-offs-considered)
 - [Deliberately not built](#deliberately-not-built)
 - [How AI-assisted development was used](#how-ai-assisted-development-was-used)
+- [Engineering practices](#engineering-practices)
 - [Testing](#testing)
 - [Requirements traceability](#requirements-traceability)
 - [Troubleshooting](#troubleshooting)
@@ -603,6 +608,60 @@ tick-state one: the first suggestion was a Redux slice for market data, which is
 answer and would have failed R20 and R31 under load. It was rejected in favour of the keyed external
 store, and the Telemetry screen exists partly so the difference is demonstrable rather than
 argued.
+
+---
+
+## Engineering practices
+
+The short version of how the code is written. The sections above give the reasoning; this is the
+checklist.
+
+**Type safety**
+
+- TypeScript strict in both packages. `any` is an ESLint **error**, not a warning - untrusted input
+  is `unknown` plus a narrowing guard (`isClientMessage`, the Binance frame normalizer).
+- Floating and misused promises are errors too, so a forgotten `await` fails the build instead of
+  swallowing a rejection at runtime.
+- One protocol definition: `types/protocol.ts` lives in the backend and is copied to mobile by
+  `npm run sync:protocol`, so the wire contract cannot drift between the two packages.
+
+**Linting as a gate, not a suggestion**
+
+- `npm run verify` is ESLint at `--max-warnings 0`, `tsc --noEmit` and Jest, in both packages. A
+  change that has not passed it is not finished.
+- `no-console` is an error everywhere except `utils/logger.ts`, so there is exactly one output sink.
+- `react-native/no-inline-styles` and `no-color-literals` are errors, which is what stops the design
+  tokens being bypassed under time pressure.
+
+**Separation of logic and UI**
+
+- Anything a component *computes* rather than *renders* lives in `features/<name>/domain/` on
+  mobile, or `market/metrics.ts` on the backend - pure functions, no React, no sockets, tested by
+  calling them with numbers.
+- Backend folders mirror the pipeline stages, so the data flow and the directory listing are the
+  same thing: `binance/` ingests, `market/` conflates, `ws/` fans out, `routes/` serves REST.
+- `config.ts` is the only module that reads `process.env`, and `mobile/src/config` the only one that
+  knows a host name.
+
+**Performance**
+
+- Conflation rather than queueing: one snapshot per pair, overwritten in place, so memory is
+  `O(pairs)` and independent of message rate.
+- Serialize once per subscription group, never once per client.
+- Tick data is kept out of Redux in a keyed external store, so only the row whose pair moved
+  re-renders.
+- Animations run on the UI thread through Reanimated, so they stay smooth precisely when the JS
+  thread is busy.
+- Stylesheets are static and built once at import - `StyleSheet.create` is never reached in a
+  render body.
+- The watchlist is virtualised with FlashList. The fixed eight-row order book is not, because
+  virtualisation would add a recycling layer to solve a problem that list does not have.
+
+**Traceability**
+
+- Every requirement has an ID, `R1` to `R37`. Test names and commit messages carry them, so
+  `rg "R6"` finds the code, its tests and its history together.
+- Debatable calls are written up as ADRs in [`docs/adr/`](docs/adr/) rather than left as folklore.
 
 ---
 
