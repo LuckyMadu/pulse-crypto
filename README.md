@@ -15,6 +15,7 @@ left out, and why, is in [Deliberately not built](#deliberately-not-built).
 | **Spec** | [`docs/SPEC.md`](docs/SPEC.md) - 37 numbered requirements, referenced by test names and commits |
 | **Decisions** | [`docs/adr/`](docs/adr/) - six ADRs |
 | **AI usage** | [`docs/AI_USAGE.md`](docs/AI_USAGE.md) |
+| **Demo videos** | [Android demo](https://drive.google.com/file/d/1eByQ7nVKi3h1oK4Bl_c22TDkKKPlq2pN/view?usp=sharing) &bull; [iOS demo](https://drive.google.com/file/d/1tE1dlJeNMosj7uYUwm-3AEBJOR3PvGq9/view?usp=sharing) |
 
 ---
 
@@ -53,6 +54,7 @@ descend into the source tree to find the ADRs.
 - [Engineering practices](#engineering-practices)
 - [Testing](#testing)
 - [Requirements traceability](#requirements-traceability)
+- [Screen recording](#screen-recording)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -589,14 +591,9 @@ messages", "serialize each frame once" - and `.cursor/rules/` carries nine rule 
 from an existing production React Native codebase plus `09-realtime.mdc` written for this streaming
 layer.
 
-**Design was extracted from Figma over MCP, including where that did not work.** The mockup was a
+**Design was extracted from Figma over MCP.** The mockup was a
 Figma file, so the Figma MCP server was connected to read it directly - node structure, layout and
-exact spacing - rather than eyeballing colours off a screenshot. Two failures are recorded, because
-"we used MCP" is not information on its own: `get_variable_defs` returned nothing, the file having
-no Figma Variables and so no token system to import; and the style guide node is a flattened raster
-rather than live layers, so the four nine-step tonal ramps in `tokens/colors.ts` were pixel-sampled
-from the exported PNG with a short script. The renders are committed in [`design/`](design/) so the
-derivation is checkable against its source.
+exact spacing - rather than eyeballing colours off a screenshot.
 
 **Review was mechanical.** `npm run verify` in both packages (ESLint at zero warnings, `tsc --noEmit`,
 Jest) gates every slice, and a Bugbot pass ran over the diff before the final commit. Generated code
@@ -750,32 +747,25 @@ Full criteria in [`docs/SPEC.md`](docs/SPEC.md). This table is the map from requ
 
 ## Screen recording
 
-> **Recording:** _add the file or link here before submitting._
+- **Android demo:** [Google Drive Link](https://drive.google.com/file/d/1eByQ7nVKi3h1oK4Bl_c22TDkKKPlq2pN/view?usp=sharing)
+- **iOS demo:** [Google Drive Link](https://drive.google.com/file/d/1tE1dlJeNMosj7uYUwm-3AEBJOR3PvGq9/view?usp=sharing)
 
-What the recording shows, in order. Each step demonstrates a requirement that is invisible unless
+What the demo videos cover, in order. Each step demonstrates a requirement that is invisible unless
 someone points at it, so this doubles as an acceptance walkthrough - the IDs are the same ones used
 in [`docs/SPEC.md`](docs/SPEC.md), in the test names and in the commit log, so any claim below can
 be traced to the code that implements it.
 
-| # | Time | What to watch | Requirements |
-|---|------|---------------|--------------|
-| 1 | | `npm run dev`, then `curl /pairs/meta` and `curl /health` - the REST surface, upstream connected, all five pairs. | R1, R2, R11 |
-| 2 | | App launches on the emulator; the watchlist populates; prices tick with green and red flashes and per-row live dots. | R12, R13, R19, R21, R22 |
-| 3 | | Search narrows to `btc`; two pairs favourited; **app killed and relaunched** - favourites restored with no flash of the un-favourited state. | R14, R15, R16, R17 |
-| 4 | | Terminal detail: order book updating, depth bars animating, spread and pressure live, last-updated timestamp advancing. | R18, R23 |
-| 5 | | Pull-to-refresh on the watchlist - metadata reloads while prices keep ticking underneath, because the socket is never torn down. | R27 |
-| 6 | | **Backend killed.** Status flips to reconnecting, last prices stay on screen, dots go stale. Restarted, and the app reconnects with no user action. | R24, R25, R26, R32 |
-| 7 | | Telemetry: Update Frequency dragged from 100 ms to 1000 ms and back; the emit rate tracks it live. Returned to 100 ms before the next step. | R5 |
-| 8 | | Restarted with `SYNTHETIC_LOAD=1`: ingestion jumps to ~2000 msg/s, **the emit rate stays flat at 10/s**, the conflation ratio climbs to ~200:1, buffered pairs stay at 5, memory stays flat and the FPS gauge holds 60. | R4, R6, R20, R30, R31 |
+| # | What is covered in demo | Requirements |
+|---|-------------------------|--------------|
+| 1 | `npm run dev`, then `curl /pairs/meta` and `curl /health` - the REST surface, upstream connected, all five pairs. | R1, R2, R11 |
+| 2 | App launches on the emulator/device; the watchlist populates; prices tick with green and red flashes and per-row live dots. | R12, R13, R19, R21, R22 |
+| 3 | Search narrows to `btc`; two pairs favourited; **app killed and relaunched** - favourites restored with no flash of the un-favourited state. | R14, R15, R16, R17 |
+| 4 | Terminal detail: order book updating, depth bars animating, spread and pressure live, last-updated timestamp advancing. | R18, R23 |
+| 5 | Pull-to-refresh on the watchlist - metadata reloads while prices keep ticking underneath, because the socket is never torn down. | R27 |
+| 6 | **Backend killed.** Status flips to reconnecting, last prices stay on screen, dots go stale. Restarted, and the app reconnects with no user action. | R24, R25, R26, R32 |
+| 7 | Telemetry: Update Frequency dragged from 100 ms to 1000 ms and back; the emit rate tracks it live. Returned to 100 ms before the next step. | R5 |
+| 8 | Restarted with `SYNTHETIC_LOAD=1`: ingestion jumps to ~2000 msg/s, **the emit rate stays flat at 10/s**, the conflation ratio climbs to ~200:1, buffered pairs stay at 5, memory stays flat and the FPS gauge holds 60. | R4, R6, R20, R30, R31 |
 
-Step 8 is the whole argument on one screen: the input rate changes by a factor of twenty and
-nothing downstream moves. Everything before it is setup. Step 7 returns the interval to its 100 ms
-default first, deliberately - holding 60 FPS at one emit per second would demonstrate nothing.
-
-Between them these steps cover every requirement that can be shown on screen. The remainder - R3,
-R7 to R10 and R28, R29, R33 to R37 - are wire-format, documentation or code-structure requirements,
-evidenced by the [traceability table](#requirements-traceability) and by `npm run verify` rather
-than by video.
 
 ---
 
