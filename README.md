@@ -1,16 +1,16 @@
 # PulseCrypto
 
 A real-time cryptocurrency market data pipeline: an Express gateway that ingests Binance public
-market streams, conflates them, and fans them out over WebSocket to a bare React Native client.
+market streams, conflates them, and fans them out over WebSocket to a React Native CLI client.
 
 Built as a time-boxed engineering exercise, so it optimises for one thing - sustained update rates
 with a UI that stays responsive under them - and trades away feature breadth to get there. What was
 left out, and why, is in [Deliberately not built](#deliberately-not-built).
 
-| | |
+| Area | Details |
 |---|---|
 | **Backend** | Node 20+, Express 5, `ws`, TypeScript |
-| **Mobile** | Bare React Native 0.86, React 19, TypeScript |
+| **Mobile** | React Native CLI 0.86, React 19, TypeScript |
 | **State** | RTK Query (metadata), Redux + MMKV (favourites), keyed external store (ticks) |
 | **Spec** | [`docs/SPEC.md`](docs/SPEC.md) - 37 numbered requirements, referenced by test names and commits |
 | **Decisions** | [`docs/adr/`](docs/adr/) - six ADRs |
@@ -24,7 +24,7 @@ left out, and why, is in [Deliberately not built](#deliberately-not-built).
 ```
 pulse-crypto/      the system - the two packages that make up the product
   backend/         Express 5 + ws gateway
-  mobile/          bare React Native app
+  mobile/          React Native CLI app
 docs/              SPEC, ADRs, AI usage log - the written deliverables
 design/            the Figma renders the design system was derived from
 ```
@@ -523,7 +523,7 @@ the REST surface here is two endpoints hit occasionally, while the hot path is W
 which does not go through the HTTP framework at all. Express 5's async error forwarding and its
 ubiquity at review time are worth more than throughput this service will never need.
 
-**Bare React Native vs. Expo.** Expo would have been faster to start. The brief calls for the
+**React Native CLI vs. Expo.** Expo would have been faster to start. The brief calls for the
 Android emulator and this app leans on MMKV, Reanimated worklets and font linking - all of which are
 either config-plugin territory or a prebuild away from bare anyway.
 See [ADR-0005](docs/adr/0005-bare-react-native.md).

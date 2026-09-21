@@ -11,7 +11,7 @@ A real-time cryptocurrency market data system in two parts:
 - `pulse-crypto/backend/` - an Express 5 + `ws` gateway that ingests Binance market streams,
   **conflates** them into one snapshot per pair, and fans out to mobile clients
   on a fixed interval.
-- `pulse-crypto/mobile/` - a bare React Native 0.86 app that renders a watchlist, a trading
+- `pulse-crypto/mobile/` - a React Native CLI 0.86 app that renders a watchlist, a trading
   terminal and a telemetry screen.
 
 Everything outside `pulse-crypto/` is written deliverable rather than code: `docs/`

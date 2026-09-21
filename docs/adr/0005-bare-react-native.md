@@ -1,4 +1,4 @@
-# ADR-0005: Bare React Native rather than Expo
+# ADR-0005: React Native CLI rather than Expo
 
 **Status:** Accepted
 **Requirements:** R16 (persist favourites), R20 (smooth under bursts), plus the brief's Android
@@ -26,7 +26,7 @@ are easier to reason about with the manifest in front of you.
 
 ## Decision
 
-Bare React Native 0.86 via `@react-native-community/cli`.
+React Native CLI 0.86 via `@react-native-community/cli`.
 
 Configuration - `babel.config.js`, `tsconfig.json` path aliases, `eslint.config.mjs`,
 `.prettierrc.js` - was carried over from an existing production React Native codebase rather than

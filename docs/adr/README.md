@@ -10,7 +10,7 @@ sensible answer are not recorded here; that would be paperwork rather than docum
 | [0002](0002-external-store-for-ticks.md) | Hold streaming ticks in a keyed external store rather than Redux | R20, R30, R31 |
 | [0003](0003-partial-depth-stream.md) | Use `@depth20@100ms` as authoritative instead of reconciling a full order book | R3, R18 |
 | [0004](0004-backpressure-policy.md) | Skip frames for slow consumers and terminate after a sustained breach | R6, R32 |
-| [0005](0005-bare-react-native.md) | Bare React Native rather than Expo | R20, R16 |
+| [0005](0005-bare-react-native.md) | React Native CLI rather than Expo | R20, R16 |
 | [0006](0006-telemetry-as-evidence.md) | Build the mockup's Telemetry screen as live instrumentation | R20, R30, R31 |
 
 Format is deliberately short: context, decision, consequences, and what would change the answer.

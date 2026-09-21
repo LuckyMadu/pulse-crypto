@@ -1,6 +1,6 @@
 # PulseCrypto app
 
-Bare React Native 0.86 client for the [PulseCrypto gateway](../backend). Setup prerequisites, the
+React Native CLI 0.86 client for the [PulseCrypto gateway](../backend). Setup prerequisites, the
 state architecture and the requirements traceability table live in the
 [root README](../../README.md); this file is the operational summary.
 
