@@ -285,11 +285,10 @@ frames in userland forever while a stalled phone or a paused debugger ignores th
    (default 50, which is 5 s at the default interval) means the client is not coming back, so the
    socket is terminated rather than held open.
 
-**Skipping is safe precisely because of conflation**, and this is the elegant part: the next tick
-carries current state rather than the next item in a backlog, so a client that recovers resyncs
-automatically instead of replaying stale history. A queueing design would have to choose between
-replaying history nobody wants and dropping from the middle of a sequence; conflation removes the
-choice.
+**Skipping is safe precisely because of conflation**: the next tick carries current state rather than
+the next item in a backlog, so a client that recovers resyncs automatically instead of replaying
+stale history. A queueing design would have to choose between replaying history nobody wants and
+dropping from the middle of a sequence; conflation removes the choice.
 
 A separate 30-second ping/pong heartbeat reaps half-open sockets - the connections that are gone but
 never sent a close frame, which is the normal failure mode on mobile networks.
@@ -488,8 +487,8 @@ that is ticking. The app bar keeps a global indicator as well.
    slider initialises at 100. Flagging the discrepancy seemed better than silently picking one.
 
 2. **`setEmitInterval` retunes the shared emitter globally, not per client.** A per-client cadence
-   would cost a timer per socket and buy nothing for a demo. Documented rather than hidden, since a
-   second connected client would observe the change.
+   would cost a timer per socket and provides little value in a single-client evaluation. Documented
+   rather than hidden, since a second connected client would observe the change.
 
 3. **Buy/sell pressure is an order book imbalance proxy.** Binance publishes no pressure metric, so
    it is computed as bid notional over total notional across the top 20 levels, x100. Standard, but
@@ -508,8 +507,9 @@ that is ticking. The app bar keeps a global indicator as well.
    countries. A reviewer on a blocked network would otherwise see an app that connects to the
    gateway but shows no prices, which looks like a bug in the code.
 
-7. **Android emulator is the target.** iOS is scaffolded and should build, but it is untested; the
-   brief only requires Android.
+7. **Android emulator was the primary target required by the brief.** However, the implementation is
+   cross-platform, and an iOS build was also verified on the iOS Simulator (demonstrated in the demo
+   recordings).
 
 ---
 
@@ -538,10 +538,11 @@ the guarantee that matters (drift fails CI) for three lines.
 
 **Per-client vs. global emit cadence.** See assumption 2.
 
-**Targeted tests vs. coverage.** Roughly a dozen tests, aimed at the logic that is easy to get
-subtly wrong and hard to eyeball: memory boundedness, dirty-set flushing, the backpressure state
-machine, the spread and pressure math, and the store's notification isolation. Chasing a coverage
-number on a two-day exercise produces tests that assert the implementation back at itself.
+**Targeted tests vs. coverage.** Roughly a dozen tests aimed at high-risk architectural invariants
+that are easy to get subtly wrong and hard to eyeball: memory boundedness under load, dirty-set
+flushing, the backpressure state machine, spread and pressure mathematics, and store notification
+isolation. Prioritizing these load-bearing contracts provides far higher confidence than chasing
+blanket coverage metrics with tests that merely assert the implementation back at itself.
 
 ---
 
@@ -552,17 +553,17 @@ left implicit:
 
 - **No full order book reconciliation.** See assumption 5.
 - **No Redis, Kafka, or horizontal scaling.** Single process, in-memory. The scale-out path is
-  sticky sessions or a shared conflation tier; neither is needed for five pairs and it would be
-  architecture theatre to build it.
+  sticky sessions or a shared conflation tier; neither is needed for five pairs and would be
+  premature over-engineering.
 - **No auth, no database, no Docker, no GraphQL.** Nothing in the brief needs them.
 - **No Settings screen and no side drawer**, despite both appearing in the mockup. The drawer is
   marked "Hidden by Default" and holds API Keys / Security / Trade History / Sign Out - account
-  features with no backing service and nothing to do with real-time market data. The Settings tab
-  renders a short placeholder saying exactly that. Cutting a designed-but-irrelevant screen is a
-  better signal than half-building it.
-- **No "Adaptive Polling Strategy" toggle** from the mockup. It sounds impressive and means nothing
-  concrete here; the Update Frequency slider already demonstrates a configurable emit interval, for
-  real.
+  features with no backing service in this exercise. The Settings tab renders a short placeholder
+  stating this scope boundary. Leaving non-essential account screens unbuilt avoids unbacked mock UI
+  and keeps the focus entirely on the core streaming architecture.
+- **No "Adaptive Polling Strategy" toggle** from the mockup. Excluded because the system is
+  WebSocket-driven rather than polling-based; dynamic emit cadence is already directly controllable
+  via the Update Frequency slider.
 - **No blanket test coverage.** See trade-offs.
 
 ---
@@ -582,8 +583,9 @@ rg -o 'R\d+' pulse-crypto/*/src | sort -u       # what is covered
 git log --oneline --grep 'R6'                    # what touched a requirement
 ```
 
-That is the whole trick, and it costs nothing. When an agent writes most of the code you cannot
-verify it by reading all of it, so completeness has to be greppable rather than taken on trust.
+When leveraging AI for high-velocity implementation, manual inspection alone is insufficient.
+Architectural invariants and requirement coverage must be programmatically verifiable and traceable
+(via automated test suites and spec tags) rather than taken on trust.
 
 **The agent worked against committed context, not ad hoc prompts.** [`AGENTS.md`](AGENTS.md) holds
 the invariants an agent must not break - "never dispatch tick data to Redux", "never queue upstream
@@ -596,9 +598,9 @@ Figma file, so the Figma MCP server was connected to read it directly - node str
 exact spacing - rather than eyeballing colours off a screenshot.
 
 **Review was mechanical.** `npm run verify` in both packages (ESLint at zero warnings, `tsc --noEmit`,
-Jest) gates every slice, and a Bugbot pass ran over the diff before the final commit. Generated code
-gets more value from an automated gate than hand-written code does, because there is more of it and
-it arrives faster than you can read it.
+Jest) gates every slice, and a Bugbot pass ran over the diff before the final commit. Automated
+verification gates provide immediate, deterministic protection against regressions during rapid AI
+iterations.
 
 **Judgment was applied, and the log says where.** The most useful entry in `AI_USAGE.md` is the
 tick-state one: the first suggestion was a Redux slice for market data, which is the conventional
@@ -765,7 +767,6 @@ be traced to the code that implements it.
 | 6 | **Backend killed.** Status flips to reconnecting, last prices stay on screen, dots go stale. Restarted, and the app reconnects with no user action. | R24, R25, R26, R32 |
 | 7 | Telemetry: Update Frequency dragged from 100 ms to 1000 ms and back; the emit rate tracks it live. Returned to 100 ms before the next step. | R5 |
 | 8 | Restarted with `SYNTHETIC_LOAD=1`: ingestion jumps to ~2000 msg/s, **the emit rate stays flat at 10/s**, the conflation ratio climbs to ~200:1, buffered pairs stay at 5, memory stays flat and the FPS gauge holds 60. | R4, R6, R20, R30, R31 |
-
 
 ---
 
